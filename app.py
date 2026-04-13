@@ -15,13 +15,16 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 if os.environ.get('RENDER'):
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
-        # Convert Render's 'postgres://' to SQLAlchemy 2.0 + psycopg3 format
-        database_url = database_url.replace('postgres://', 'postgresql+psycopg://')
+        # Convert Render's 'postgres://' to 'postgresql+psycopg://' so psycopg3 is used
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
+        elif database_url.startswith('postgresql://'):
+            database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        raise ValueError("DATABASE_URL environment variable not set on Render")
 else:
-    # Local development: use SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
