@@ -807,7 +807,21 @@ def create_admin():
             admin.set_password('_Hanuman@440_')
             db.session.add(admin)
             db.session.commit()
-            print("Default admin created: username='admin', password='admin123'")
+            print("Default admin created: username='Hanuman', password='_Hanuman@440_'")
+
+@app.route('/setup-db')
+def setup_db():
+    try:
+        db.create_all()
+        # Create default admin if not exists
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', email='admin@temple.com', role='admin', full_name='Administrator')
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+        return "✅ Database tables created successfully! You can now remove this route."
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
 
 
 if __name__ == '__main__':
