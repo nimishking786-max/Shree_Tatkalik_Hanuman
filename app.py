@@ -10,7 +10,7 @@ import secrets
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fd7095321841446bb33caf12d58aeba9')
 
 # Database configuration
 if os.environ.get('RENDER'):
