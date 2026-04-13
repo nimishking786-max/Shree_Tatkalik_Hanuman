@@ -36,7 +36,8 @@ if os.environ.get('RENDER'):
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     print(f"✅ Using database: {database_url.split('@')[1] if '@' in database_url else database_url}", flush=True)
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 # Upload folder configuration
