@@ -800,8 +800,8 @@ def create_admin():
     with app.app_context():
         db.create_all()
         if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin', email='admin@temple.com', role='admin', full_name='Administrator')
-            admin.set_password('admin123')
+            admin = User(username='Hanuman', email='tatkalikhanumantemple@gmail.com', role='admin', full_name='Administrator')
+            admin.set_password('_Hanuman@440_')
             db.session.add(admin)
             db.session.commit()
             print("Default admin created: username='admin', password='admin123'")
