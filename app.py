@@ -15,16 +15,13 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 if os.environ.get('RENDER'):
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
-        # Convert Render's 'postgres://' to 'postgresql+psycopg://' so psycopg3 is used
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
-        elif database_url.startswith('postgresql://'):
-            database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+        # Convert Render's 'postgres://' to SQLAlchemy 2.0 + psycopg3 format
+        database_url = database_url.replace('postgres://', 'postgresql+psycopg://')
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    else:
-        raise ValueError("DATABASE_URL environment variable not set on Render")
 else:
+    # Local development: use SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
@@ -800,29 +797,25 @@ def admin_daily_darshan_delete(id):
 # Create default admin user if not exists
 # -------------------------------
 def create_admin():
+    """Create database tables and default admin user."""
     with app.app_context():
-        db.create_all()
-        if not User.query.filter_by(username='admin').first():
-            admin = User(username='Hanuman', email='tatkalikhanumantemple@gmail.com', role='admin', full_name='Administrator')
-            admin.set_password('_Hanuman@440_')
-            db.session.add(admin)
-            db.session.commit()
-            print("Default admin created: username='Hanuman', password='_Hanuman@440_'")
-
-@app.route('/setup-db')
-def setup_db():
-    try:
-        db.create_all()
+        try:
+            # Test connection and create tables if needed
+            db.session.execute('SELECT 1')
+        except Exception:
+            # Tables don't exist or connection issue – create all
+            db.create_all()
+            print("✅ Database tables created successfully!")
+        finally:
+            db.session.remove()
+        
         # Create default admin if not exists
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin', email='admin@temple.com', role='admin', full_name='Administrator')
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-        return "✅ Database tables created successfully! You can now remove this route."
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
-
+            print("✅ Default admin created: username='admin', password='admin123'")
 
 if __name__ == '__main__':
     create_admin()
