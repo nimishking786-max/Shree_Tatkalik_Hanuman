@@ -11,18 +11,32 @@ import secrets
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-# Database configuration
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
 if os.environ.get('RENDER'):
     database_url = os.environ.get('DATABASE_URL')
-    if database_url:
-        # Convert Render's 'postgres://' to SQLAlchemy 2.0 + psycopg3 format
-        database_url = database_url.replace('postgres://', 'postgresql+psycopg://')
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is not set on Render!")
+    
+    # Force the use of psycopg (version 3) driver
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
+    elif database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+    else:
+        # Fallback: if already has driver, ensure it's psycopg
+        if '+psycopg2' in database_url:
+            database_url = database_url.replace('+psycopg2', '+psycopg')
+        elif '?' in database_url:
+            database_url = database_url.replace('?', '+psycopg?')
+        else:
+            database_url = database_url + '+psycopg'
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"✅ Using database: {database_url.split('@')[1] if '@' in database_url else database_url}", flush=True)
 else:
-    # Local development: use SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 # Upload folder configuration
