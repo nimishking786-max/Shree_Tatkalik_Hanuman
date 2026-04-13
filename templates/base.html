@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Shree Tatkalik Hanuman Temple - Experience divine blessings.">
+    <meta name="theme-color" content="#8B0000">
+    <title>{% block title %}Shree Tatkalik Hanuman{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/preloader.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Preloader -->
+    {% include 'components/preloader.html' %}
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-maroon sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-om"></i> Shree Tatkalik Hanuman
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}"><i class="fas fa-home"></i> Home</a></li>
+                    {% if settings.about_visible %}
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}"><i class="fas fa-info-circle"></i> About</a></li>
+                    {% endif %}
+                    {% if settings.prasad_visible %}
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'prasad_booking' %}active{% endif %}" href="{{ url_for('prasad_booking') }}"><i class="fas fa-box-open"></i> Prasad</a></li>
+                    {% endif %}
+                    {% if settings.donation_visible %}
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'donation' %}active{% endif %}" href="{{ url_for('donation') }}"><i class="fas fa-hand-holding-heart"></i> Donate</a></li>
+                    {% endif %}
+                    {% if settings.gallery_visible %}
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'gallery' %}active{% endif %}" href="{{ url_for('gallery') }}"><i class="fas fa-images"></i> Gallery</a></li>
+                    {% endif %}
+                    {% if settings.contact_visible %}
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}"><i class="fas fa-envelope"></i> Contact</a></li>
+                    {% endif %}
+                    
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-user-shield"></i> Admin</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_gallery') }}"><i class="fas fa-images"></i> Gallery</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_bookings') }}"><i class="fas fa-calendar-check"></i> Bookings</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_donations') }}"><i class="fas fa-donate"></i> Donations</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_users') }}"><i class="fas fa-users-cog"></i> Users</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_contacts') }}"><i class="fas fa-message"></i> Messages</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> {{ current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('user_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-user-edit"></i> Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('user_login') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3 flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="bg-dark text-white pt-5 pb-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5><i class="fas fa-om"></i> Shree Tatkalik Hanuman</h5>
+                    <p>Seeking blessings of Lord Hanuman for peace, prosperity, and protection.</p>
+                    <div class="social-links">
+                        {% if settings.facebook_url and settings.facebook_url != '#' %}
+                        <a href="{{ settings.facebook_url }}" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                        {% endif %}
+                        {% if settings.instagram_url and settings.instagram_url != '#' %}
+                        <a href="{{ settings.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                        {% endif %}
+                        {% if settings.youtube_url and settings.youtube_url != '#' %}
+                        <a href="{{ settings.youtube_url }}" target="_blank"><i class="fab fa-youtube"></i></a>
+                        {% endif %}
+                        {% if settings.twitter_url and settings.twitter_url != '#' %}
+                        <a href="{{ settings.twitter_url }}" target="_blank"><i class="fab fa-twitter"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        {% if settings.about_visible %}<li><a href="{{ url_for('about') }}" class="text-white-50">About</a></li>{% endif %}
+                        {% if settings.prasad_visible %}<li><a href="{{ url_for('prasad_booking') }}" class="text-white-50">Prasad</a></li>{% endif %}
+                        {% if settings.donation_visible %}<li><a href="{{ url_for('donation') }}" class="text-white-50">Donate</a></li>{% endif %}
+                        {% if settings.gallery_visible %}<li><a href="{{ url_for('gallery') }}" class="text-white-50">Gallery</a></li>{% endif %}
+                        {% if settings.contact_visible %}<li><a href="{{ url_for('contact') }}" class="text-white-50">Contact</a></li>{% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5>Contact Info</h5>
+                    <p><i class="fas fa-map-marker-alt me-2"></i> 
+                        {{ settings.address_line1 }}{% if settings.address_line2 %}, {{ settings.address_line2 }}{% endif %}, 
+                        {{ settings.city }}, {{ settings.state }} - {{ settings.pincode }}
+                    </p>
+                    <p><i class="fas fa-phone-alt me-2"></i> {{ settings.phone_primary }}</p>
+                    {% if settings.phone_secondary %}
+                    <p><i class="fas fa-phone-alt me-2"></i> {{ settings.phone_secondary }}</p>
+                    {% endif %}
+                    <p><i class="fas fa-envelope me-2"></i> {{ settings.email_primary }}</p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5>Newsletter</h5>
+                    <p>Subscribe for temple updates.</p>
+                    <div class="input-group">
+                        <input type="email" class="form-control" placeholder="Email">
+                        <button class="btn btn-primary" type="button"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+            <hr class="bg-secondary">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 Shree Tatkalik Hanuman. All rights reserved. | Developed with <i class="fas fa-heart text-danger"></i></p>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h2 class="mt-4">Gallery Management</h2>
+<div class="card mb-4">
+    <div class="card-header">Upload New Image</div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin_gallery_upload') }}" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label>Title</label>
+                        <input type="text" name="title" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label>Category</label>
+                        <select name="category" class="form-select">
+                            <option value="temple">Temple</option>
+                            <option value="events">Events</option>
+                            <option value="deity">Deity</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Image File</label>
+                        <input type="file" name="image" id="imageUpload" class="form-control" accept="image/*" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_featured" value="yes">
+                        <label class="form-check-label">Feature this image</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+                <div class="col-md-6">
+                    <label>Preview</label>
+                    <div class="border p-2 text-center">
+                        <img id="imagePreview" src="#" alt="Preview" style="max-width:100%; max-height:200px; display:none;">
+                        <p id="previewText" class="text-muted">No image selected</p>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Existing images table... -->
+<script>
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('imagePreview');
+        const previewText = document.getElementById('previewText');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                previewText.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+            previewText.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

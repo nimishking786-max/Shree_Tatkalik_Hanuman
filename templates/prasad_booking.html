@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Prasad Booking{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4"><i class="fas fa-box-open"></i> Book Prasad</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Select Prasad Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="prasadForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone *</label>
+                                <input type="tel" name="phone" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Booking Date *</label>
+                                <input type="text" id="bookingDate" name="booking_date" class="form-control" placeholder="Select date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prasad Type *</label>
+                                <select name="prasad_type" class="form-select" id="prasadType" required>
+                                    <option value="ladoo" data-price="251">Ladoo (500g) - ₹251</option>
+                                    <option value="peda" data-price="151">Peda (250g) - ₹151</option>
+                                    <option value="charnamrit" data-price="51">Charnamrit - ₹51</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Quantity *</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Total Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="text" id="totalAmount" class="form-control" readonly value="251">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Special Requests</label>
+                                <textarea name="special_requests" class="form-control" rows="3" placeholder="Any specific instructions..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                    <label class="form-check-label" for="agreeTerms">I agree to the terms and conditions</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-check-circle"></i> Submit Booking</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    // Initialize date picker
+    flatpickr("#bookingDate", {
+        minDate: "today",
+        maxDate: new Date().fp_incr(30),
+        dateFormat: "Y-m-d",
+        disable: [
+            function(date) { return (date.getDay() === 1); } // Disable Mondays
+        ]
+    });
+
+    // Calculate total
+    const prasadSelect = document.getElementById('prasadType');
+    const quantityInput = document.getElementById('quantity');
+    const totalSpan = document.getElementById('totalAmount');
+
+    function updateTotal() {
+        const selectedOption = prasadSelect.options[prasadSelect.selectedIndex];
+        const price = parseInt(selectedOption.dataset.price);
+        const qty = parseInt(quantityInput.value) || 1;
+        totalSpan.value = price * qty;
+    }
+
+    prasadSelect.addEventListener('change', updateTotal);
+    quantityInput.addEventListener('input', updateTotal);
+    updateTotal();
+</script>
+{% endblock %}

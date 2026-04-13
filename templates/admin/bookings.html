@@ -1,0 +1,20 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h2 class="mt-4">Prasad Bookings</h2>
+<table class="table table-striped">
+    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Prasad</th><th>Qty</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b.id }}</td><td>{{ b.name }}</td><td>{{ b.email }}</td><td>{{ b.phone }}</td>
+            <td>{{ b.prasad_type }}</td><td>{{ b.quantity }}</td><td>{{ b.booking_date }}</td>
+            <td><span class="badge bg-{{ 'success' if b.status=='completed' else 'warning' }}">{{ b.status }}</span></td>
+            <td>
+                <a href="{{ url_for('admin_booking_update', id=b.id, status='confirmed') }}" class="btn btn-sm btn-success">Confirm</a>
+                <a href="{{ url_for('admin_booking_update', id=b.id, status='completed') }}" class="btn btn-sm btn-primary">Complete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

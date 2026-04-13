@@ -1,0 +1,20 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h2 class="mt-4">Donations</h2>
+<p>Total: ₹{{ "%.2f"|format(total) }}</p>
+<table class="table table-striped">
+    <thead><tr><th>ID</th><th>Name</th><th>Amount</th><th>Purpose</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+        {% for d in donations %}
+        <tr>
+            <td>{{ d.id }}</td><td>{{ d.name if not d.anonymous else 'Anonymous' }}</td>
+            <td>₹{{ d.amount }}</td><td>{{ d.purpose }}</td>
+            <td><span class="badge bg-{{ 'success' if d.status=='completed' else 'warning' }}">{{ d.status }}</span></td>
+            <td>
+                <a href="{{ url_for('admin_donation_update', id=d.id, status='completed') }}" class="btn btn-sm btn-success">Mark Completed</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

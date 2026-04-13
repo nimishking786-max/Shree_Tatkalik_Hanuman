@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}About | Shree Tatkalik Hanuman{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold">About Shree Tatkalik Hanuman Temple</h1>
+        <p class="lead">A divine abode of Lord Hanuman, fulfilling wishes instantly.</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow h-100">
+                <img src="{{ url_for('static', filename='images/about.jpeg') }}" class="card-img-top" style="height:300px; object-fit:cover;" alt="Temple">
+                <div class="card-body">
+                    <h3><i class="fas fa-history text-primary"></i> Our Legacy</h3>
+                    <p>Established over 300 years ago, Shree Tatkalik Hanuman Mandir is renowned for its powerful deity who grants immediate relief to devotees. The temple's serene atmosphere and ancient rituals attract thousands of visitors daily.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <h3><i class="fas fa-clock text-primary"></i> Temple Timings</h3>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between"><span>Morning Darshan</span> <strong>{{ settings.morning_open }} - {{ settings.morning_close }}</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Evening Darshan</span> <strong>{{ settings.evening_open }} - {{ settings.evening_close }}</strong></li>
+                    </ul>
+                    <h3><i class="fas fa-bell text-primary"></i> Aarti Schedule</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between"><span>Mangala Aarti</span> <strong>{{ settings.mangala_aarti }}</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Bhog Aarti</span> <strong>{{ settings.bhog_aarti }}</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Sandhya Aarti</span> <strong>{{ settings.sandhya_aarti }}</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Shayan Aarti</span> <strong>{{ settings.shayan_aarti }}</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Map Embed -->
+    <div class="card border-0 shadow">
+        <div class="card-body">
+            <h3><i class="fas fa-map-marked-alt text-primary"></i> Location</h3>
+            {% if settings.google_maps_embed %}
+            <div class="ratio ratio-21x9">
+                <iframe src="{{ settings.google_maps_embed }}" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+            {% endif %}
+            <p class="mt-2"><i class="fas fa-location-dot"></i> {{ settings.address_line1 }}, {{ settings.city }}, {{ settings.state }} - {{ settings.pincode }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

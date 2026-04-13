@@ -1,0 +1,15 @@
+body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; }
+.bg-maroon { background-color: #8B0000 !important; }
+.navbar-brand i { color: #ffd700; }
+.social-links a { color: #fff; margin-right: 15px; font-size: 1.5rem; transition: color 0.3s; }
+.social-links a:hover { color: #ffd700; }
+.btn-primary { background-color: #8B0000; border-color: #8B0000; }
+.btn-primary:hover { background-color: #a52a2a; border-color: #a52a2a; }
+.gallery-card { transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+.gallery-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.flash-container { position: relative; z-index: 1000; }
+.alert { border-left: 4px solid; }
+.alert-success { border-left-color: #28a745; }
+.alert-danger { border-left-color: #dc3545; }
+/* Amount buttons */
+.amount-btn.active { background-color: #8B0000; color: white; }

@@ -1,0 +1,757 @@
+{% extends "base.html" %}
+
+{% block title %}Home | Shree Tatkalik Hanuman{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Override base styles for fullscreen 3D canvas */
+    body {
+        margin: 0;
+        overflow: hidden;
+    }
+    main {
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
+    .navbar {
+        z-index: 20;
+        background: rgba(139, 0, 0, 0.9) !important;
+        backdrop-filter: blur(5px);
+    }
+    footer {
+        display: none; /* Hide footer on home page for immersive experience */
+    }
+    #info {
+        position: absolute;
+        top: 100px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        color: #ffd700;
+        text-shadow: 0 0 30px rgba(255, 215, 0, 0.9), 0 0 60px #ff8c00;
+        z-index: 10;
+        pointer-events: none;
+        font-family: 'Poppins', sans-serif;
+    }
+    #info h1 {
+        font-size: 4rem;
+        margin: 0;
+        letter-spacing: 8px;
+        font-weight: 700;
+        animation: titleGlow 3s infinite alternate;
+    }
+    #info p {
+        font-size: 1.5rem;
+        margin: 10px 0 0;
+        opacity: 0.95;
+        color: #fff5e0;
+        letter-spacing: 4px;
+    }
+	.navbar {
+    z-index: 1030 !important; /* Bootstrap default is 1030 */
+}
+#dailyDarshanWidget {
+    z-index: 50 !important; /* Lower than navbar */
+}
+    @keyframes titleGlow {
+        from { text-shadow: 0 0 20px #ffaa00, 0 0 40px #ff5500; }
+        to { text-shadow: 0 0 30px #ffdd44, 0 0 70px #ff8800; }
+    }
+    #instruction {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,0.7);
+        background: rgba(0,0,0,0.3);
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        z-index: 10;
+        pointer-events: none;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,215,0,0.3);
+    }
+    #instruction i {
+        margin: 0 5px;
+        color: #ffd700;
+    }
+    @media (max-width: 768px) {
+        #info h1 { font-size: 2.5rem; letter-spacing: 4px; }
+        #info p { font-size: 1rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="info">
+    <h1>શ્રી તાત્કાલીક હનુમાન</h1>
+    <p>Shree Tatkalik Hanuman</p>
+</div>
+<div id="instruction">
+    <i class="fas fa-mouse"></i> Drag to rotate · <i class="fas fa-search-plus"></i> Scroll to zoom · <i class="fas fa-sync-alt"></i> Auto-rotate
+</div>
+
+<!-- Three.js Import Map -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<!-- Daily Darshan Floating Banner -->
+{% set darshan = get_today_darshan() %}
+{% if darshan %}
+<div id="dailyDarshanWidget" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 50; background: rgba(0,0,0,0.85); border-radius: 40px; padding: 10px 25px; backdrop-filter: blur(8px); border: 1px solid #ffd700; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; pointer-events: auto;">
+    {% if darshan.media_type == 'image' %}
+        <img src="{{ url_for('uploaded_file', filename=darshan.filename) }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #ffd700;">
+    {% else %}
+        <div style="width: 50px; height: 50px; background: #2a1e0f; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ffd700;">
+            <i class="fas fa-play" style="color: #ffd700; font-size: 1.2rem;"></i>
+        </div>
+    {% endif %}
+    <div style="color: white;">
+        <span style="color: #ffd700; font-weight: 600; letter-spacing: 1px;"><i class="fas fa-calendar-day me-1"></i>Today's Darshan</span>
+        {% if darshan.caption %}
+        <span style="margin-left: 12px; font-size: 0.95rem;">{{ darshan.caption }}</span>
+        {% endif %}
+    </div>
+    <button onclick="openDarshanModal()" style="background: #ffd700; border: none; border-radius: 30px; padding: 8px 20px; color: #1a0f0a; font-weight: 600; cursor: pointer; transition: all 0.3s;"><i class="fas fa-eye me-1"></i> View Darshan</button>
+</div>
+
+<!-- Darshan Modal -->
+<div class="modal fade" id="darshanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-warning">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title"><i class="fas fa-calendar-day text-warning me-2"></i>Today's Divine Darshan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                {% if darshan.media_type == 'image' %}
+                    <img src="{{ url_for('uploaded_file', filename=darshan.filename) }}" class="img-fluid" style="max-height: 80vh; width: auto;" alt="Today's Darshan">
+                {% else %}
+                    <video controls autoplay muted playsinline style="max-width: 100%; max-height: 80vh;">
+                        <source src="{{ url_for('uploaded_file', filename=darshan.filename) }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                {% endif %}
+                {% if darshan.caption %}
+                <div class="p-3 bg-dark">
+                    <p class="mb-0 text-warning fs-5">{{ darshan.caption }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDarshanModal() {
+    var modalElement = document.getElementById('darshanModal');
+    if (modalElement) {
+        var modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Modal element not found');
+    }
+}
+</script>
+{% else %}
+<!-- Optional: Show a subtle message when no darshan -->
+<!-- <div style="position: fixed; bottom: 20px; right: 20px; z-index: 50; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; color: #ccc; font-size: 0.8rem;">No darshan today</div> -->
+{% endif %}
+
+<!-- Three.js Scene -->
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- Initialize Scene ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050510);
+    scene.fog = new THREE.FogExp2(0x050510, 0.008); // Fog for depth
+    
+    // --- Camera with Intro Position ---
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(20, 12, 25); // Start farther for intro
+    camera.lookAt(0, 3, 0);
+    
+    // --- Renderers ---
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+    
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+    
+    // --- Controls ---
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.6;
+    controls.enableZoom = true;
+    controls.enablePan = false;
+    controls.maxPolarAngle = Math.PI / 2.2;
+    controls.minDistance = 10;
+    controls.maxDistance = 30;
+    controls.target.set(0, 3.5, 0);
+    
+    // --- Cursor Tracking Setup ---
+    const mouse = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+    window.addEventListener('mousemove', (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    });
+    
+    // --- Lighting (Enhanced) ---
+    scene.add(new THREE.AmbientLight(0x404060, 0.5));
+    
+    const sunLight = new THREE.DirectionalLight(0xffeedd, 1.3);
+    sunLight.position.set(10, 20, 5);
+    sunLight.castShadow = true;
+    sunLight.receiveShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    const d = 15;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 40;
+    sunLight.shadow.bias = -0.0005;
+    scene.add(sunLight);
+    
+    const fillLight1 = new THREE.PointLight(0xffaa66, 0.9);
+    fillLight1.position.set(-5, 8, 10);
+    scene.add(fillLight1);
+    
+    const fillLight2 = new THREE.PointLight(0x6688ff, 0.7);
+    fillLight2.position.set(8, 6, -10);
+    scene.add(fillLight2);
+    
+    const backLight = new THREE.PointLight(0xff9933, 0.6);
+    backLight.position.set(-5, 5, -12);
+    scene.add(backLight);
+    
+    // Cursor-following spotlight
+    const cursorSpotlight = new THREE.SpotLight(0xffaa33, 1.2);
+    cursorSpotlight.angle = 0.4;
+    cursorSpotlight.penumbra = 0.5;
+    cursorSpotlight.decay = 1;
+    cursorSpotlight.distance = 25;
+    cursorSpotlight.castShadow = true;
+    cursorSpotlight.shadow.mapSize.width = 1024;
+    cursorSpotlight.shadow.mapSize.height = 1024;
+    scene.add(cursorSpotlight);
+    const cursorLightTarget = new THREE.Object3D();
+    scene.add(cursorLightTarget);
+    cursorSpotlight.target = cursorLightTarget;
+    
+    // --- Stars Background ---
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsCount = 3000;
+    const starPositions = new Float32Array(starsCount * 3);
+    for (let i = 0; i < starsCount * 3; i += 3) {
+        const r = 60 + Math.random() * 120;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        starPositions[i] = Math.sin(phi) * Math.cos(theta) * r;
+        starPositions[i+1] = Math.sin(phi) * Math.sin(theta) * r;
+        starPositions[i+2] = Math.cos(phi) * r;
+    }
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, blending: THREE.AdditiveBlending });
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
+    
+    // --- Interactive Floating Particles ---
+    const particleCount = 60;
+    const particles = [];
+    const particleGroup = new THREE.Group();
+    const particleGeo = new THREE.SphereGeometry(0.12, 6);
+    for (let i = 0; i < particleCount; i++) {
+        const mat = new THREE.MeshStandardMaterial({ 
+            color: new THREE.Color().setHSL(0.1 + Math.random()*0.2, 0.9, 0.5),
+            emissive: new THREE.Color().setHSL(0.08, 1, 0.3),
+            emissiveIntensity: 0.8
+        });
+        const particle = new THREE.Mesh(particleGeo, mat);
+        const angle = (i / particleCount) * Math.PI * 2;
+        const radius = 6.5 + Math.random() * 2.5;
+        particle.userData = {
+            baseAngle: angle,
+            baseRadius: radius,
+            baseY: 2.5 + Math.random() * 5,
+            speed: 0.5 + Math.random() * 0.8,
+            offset: Math.random() * 10
+        };
+        particle.position.x = Math.cos(angle) * radius;
+        particle.position.z = Math.sin(angle) * radius;
+        particle.position.y = particle.userData.baseY;
+        particle.castShadow = true;
+        particleGroup.add(particle);
+        particles.push(particle);
+    }
+    scene.add(particleGroup);
+    
+    // --- Ground Plane ---
+    const groundGeometry = new THREE.CircleGeometry(40, 32);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1e0f, roughness: 0.8, metalness: 0.1, side: THREE.DoubleSide });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.01;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    
+    const ringGeo = new THREE.TorusGeometry(5.0, 0.12, 16, 100);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0xc99a3b, emissive: 0x442200, emissiveIntensity: 0.3 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.01;
+    ring.receiveShadow = true;
+    scene.add(ring);
+    
+    const ring2Geo = new THREE.TorusGeometry(8.0, 0.14, 16, 100);
+    const ring2Mat = new THREE.MeshStandardMaterial({ color: 0xb8862d, emissive: 0x331100, emissiveIntensity: 0.2 });
+    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+    ring2.rotation.x = Math.PI / 2;
+    ring2.position.y = 0.02;
+    ring2.receiveShadow = true;
+    scene.add(ring2);
+    
+    // --- Temple Construction (same as before, keep unchanged) ---
+    const templeGroup = new THREE.Group();
+    
+    const stoneMat = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.6, metalness: 0.1 });
+    const darkStoneMat = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.7 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.3, metalness: 0.7, emissive: 0x442200, emissiveIntensity: 0.2 });
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xb22222, roughness: 0.5 });
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0xbc8f8f, roughness: 0.5, emissive: 0x331100, emissiveIntensity: 0.1 });
+    
+    // Base platform
+    const baseGeo = new THREE.BoxGeometry(9, 0.7, 9);
+    const base = new THREE.Mesh(baseGeo, stoneMat);
+    base.position.y = 0.35;
+    base.receiveShadow = true; base.castShadow = true;
+    templeGroup.add(base);
+    
+    // Steps
+    const step1Geo = new THREE.BoxGeometry(5, 0.35, 2);
+    const step1 = new THREE.Mesh(step1Geo, stoneMat);
+    step1.position.set(0, 0.175, 4.8);
+    step1.receiveShadow = true; step1.castShadow = true;
+    templeGroup.add(step1);
+    
+    const step2Geo = new THREE.BoxGeometry(4, 0.35, 1.5);
+    const step2 = new THREE.Mesh(step2Geo, stoneMat);
+    step2.position.set(0, 0.525, 5.5);
+    step2.receiveShadow = true; step2.castShadow = true;
+    templeGroup.add(step2);
+    
+    // Sanctum walls
+    const sanctumBaseGeo = new THREE.BoxGeometry(5.5, 2.5, 5.5);
+    const sanctumBase = new THREE.Mesh(sanctumBaseGeo, darkStoneMat);
+    sanctumBase.position.y = 1.6;
+    sanctumBase.receiveShadow = true; sanctumBase.castShadow = true;
+    templeGroup.add(sanctumBase);
+    
+    // Inner chamber (transparent hint)
+    const innerGeo = new THREE.BoxGeometry(3.5, 2.0, 3.5);
+    const innerMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, emissive: 0x221100, emissiveIntensity: 0.5, transparent: true, opacity: 0.6 });
+    const inner = new THREE.Mesh(innerGeo, innerMat);
+    inner.position.y = 1.5;
+    inner.receiveShadow = true; inner.castShadow = true;
+    templeGroup.add(inner);
+    
+    // Corner pillars
+    const pillarGeo = new THREE.CylinderGeometry(0.5, 0.55, 2.6, 8);
+    const positions = [[-2.2, 1.7, -2.2], [2.2, 1.7, -2.2], [-2.2, 1.7, 2.2], [2.2, 1.7, 2.2]];
+    positions.forEach(pos => {
+        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+        pillar.position.set(pos[0], pos[1], pos[2]);
+        pillar.castShadow = true; pillar.receiveShadow = true;
+        templeGroup.add(pillar);
+        
+        const capitalGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.25, 8);
+        const capital = new THREE.Mesh(capitalGeo, goldMat);
+        capital.position.set(pos[0], pos[1]+1.3, pos[2]);
+        capital.castShadow = true; capital.receiveShadow = true;
+        templeGroup.add(capital);
+    });
+    
+    // Front pillars
+    [[-1.8, 1.7, 2.8], [1.8, 1.7, 2.8]].forEach(pos => {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 2.4, 8), pillarMat);
+        pillar.position.set(pos[0], pos[1], pos[2]);
+        pillar.castShadow = true; pillar.receiveShadow = true;
+        templeGroup.add(pillar);
+    });
+    
+    // Roof
+    const roofGeo = new THREE.BoxGeometry(6, 0.5, 6);
+    const roof = new THREE.Mesh(roofGeo, stoneMat);
+    roof.position.y = 2.9;
+    roof.castShadow = true; roof.receiveShadow = true;
+    templeGroup.add(roof);
+    
+    const bandGeo = new THREE.BoxGeometry(6.2, 0.15, 6.2);
+    const band = new THREE.Mesh(bandGeo, goldMat);
+    band.position.y = 3.15;
+    band.castShadow = true; band.receiveShadow = true;
+    templeGroup.add(band);
+    
+    // Shikhara (Spire)
+    const shikharaGroup = new THREE.Group();
+    
+    const towerGeo = new THREE.ConeGeometry(2.5, 4.2, 8);
+    const tower = new THREE.Mesh(towerGeo, new THREE.MeshStandardMaterial({ color: 0xcd9a5b, roughness: 0.5 }));
+    tower.position.y = 5.3;
+    tower.castShadow = true; tower.receiveShadow = true;
+    shikharaGroup.add(tower);
+    
+    for (let i = 0; i < 4; i++) {
+        const bandStripGeo = new THREE.BoxGeometry(0.18, 4.0, 0.35);
+        const bandStrip = new THREE.Mesh(bandStripGeo, goldMat);
+        bandStrip.position.y = 5.2;
+        bandStrip.position.x = Math.sin(i * Math.PI/2) * 2.1;
+        bandStrip.position.z = Math.cos(i * Math.PI/2) * 2.1;
+        bandStrip.castShadow = true;
+        shikharaGroup.add(bandStrip);
+    }
+    
+    const amalakaGeo = new THREE.TorusGeometry(1.0, 0.28, 8, 20);
+    const amalaka = new THREE.Mesh(amalakaGeo, goldMat);
+    amalaka.position.y = 7.3;
+    amalaka.rotation.x = Math.PI / 2;
+    amalaka.castShadow = true;
+    shikharaGroup.add(amalaka);
+    
+    const kalashBaseGeo = new THREE.SphereGeometry(0.6, 16, 8);
+    const kalashBase = new THREE.Mesh(kalashBaseGeo, goldMat);
+    kalashBase.position.y = 7.9;
+    kalashBase.scale.set(1, 0.65, 1);
+    kalashBase.castShadow = true;
+    shikharaGroup.add(kalashBase);
+    
+    const kalashNeckGeo = new THREE.CylinderGeometry(0.28, 0.32, 0.45, 8);
+    const kalashNeck = new THREE.Mesh(kalashNeckGeo, goldMat);
+    kalashNeck.position.y = 8.3;
+    kalashNeck.castShadow = true;
+    shikharaGroup.add(kalashNeck);
+    
+    const kalashTopGeo = new THREE.SphereGeometry(0.4, 8);
+    const kalashTop = new THREE.Mesh(kalashTopGeo, goldMat);
+    kalashTop.position.y = 8.6;
+    kalashTop.castShadow = true;
+    shikharaGroup.add(kalashTop);
+    
+    const finialGeo = new THREE.ConeGeometry(0.18, 0.6, 6);
+    const finial = new THREE.Mesh(finialGeo, goldMat);
+    finial.position.y = 9.0;
+    finial.castShadow = true;
+    shikharaGroup.add(finial);
+    
+    templeGroup.add(shikharaGroup);
+    
+    // Flag
+    const flagPoleGeo = new THREE.CylinderGeometry(0.07, 0.07, 2.0, 6);
+    const flagPole = new THREE.Mesh(flagPoleGeo, new THREE.MeshStandardMaterial({ color: 0xcd7f32 }));
+    flagPole.position.y = 9.4;
+    flagPole.position.x = 0.25;
+    flagPole.castShadow = true;
+    templeGroup.add(flagPole);
+    
+    const flagGeo = new THREE.BoxGeometry(0.9, 0.6, 0.03);
+    const flagMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0x441100 });
+    const flag = new THREE.Mesh(flagGeo, flagMat);
+    flag.position.set(0.7, 9.0, 0);
+    flag.castShadow = true;
+    templeGroup.add(flag);
+    
+    const flagLabelDiv = document.createElement('div');
+    flagLabelDiv.textContent = '॥ ॐ ॥';
+    flagLabelDiv.style.color = '#ffaa00';
+    flagLabelDiv.style.fontSize = '28px';
+    flagLabelDiv.style.fontWeight = 'bold';
+    flagLabelDiv.style.textShadow = '0 0 15px #ff5500';
+    flagLabelDiv.style.fontFamily = 'Poppins, sans-serif';
+    const flagLabel = new CSS2DObject(flagLabelDiv);
+    flagLabel.position.set(0.7, 9.0, 0.15);
+    templeGroup.add(flagLabel);
+    
+    // Entrance arch
+    const archPillarL = new THREE.Mesh(new THREE.BoxGeometry(0.45, 2.2, 0.45), goldMat);
+    archPillarL.position.set(-1.9, 2.0, 3.2);
+    archPillarL.castShadow = true; archPillarL.receiveShadow = true;
+    templeGroup.add(archPillarL);
+    
+    const archPillarR = archPillarL.clone();
+    archPillarR.position.set(1.9, 2.0, 3.2);
+    templeGroup.add(archPillarR);
+    
+    const archBeam = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.35, 0.45), goldMat);
+    archBeam.position.set(0, 3.1, 3.2);
+    archBeam.castShadow = true; archBeam.receiveShadow = true;
+    templeGroup.add(archBeam);
+    
+    scene.add(templeGroup);
+    
+    // --- Deity Image with Pulsing Effect ---
+    let deityPlane, deityMaterial;
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+        '/static/images/hanuman.jpg',
+        (texture) => {
+            const planeWidth = 2.2;
+            const planeHeight = 3.0;
+            deityMaterial = new THREE.MeshStandardMaterial({
+                map: texture,
+                side: THREE.DoubleSide,
+                emissive: new THREE.Color(0x553322),
+                emissiveIntensity: 0.3
+            });
+            deityPlane = new THREE.Mesh(new THREE.PlaneGeometry(planeWidth, planeHeight), deityMaterial);
+            deityPlane.position.set(0, 2.1, 0.6);
+            deityPlane.castShadow = false;
+            deityPlane.receiveShadow = true;
+            scene.add(deityPlane);
+            
+            // Frame
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.4 });
+            const fw = planeWidth, fh = planeHeight;
+            const ft = 0.08, fd = 0.1;
+            const topFrame = new THREE.Mesh(new THREE.BoxGeometry(fw+0.2, ft, fd), frameMat);
+            topFrame.position.set(0, 2.1 + fh/2 + 0.1, 0.65);
+            topFrame.castShadow = true; topFrame.receiveShadow = true;
+            scene.add(topFrame);
+            const bottomFrame = topFrame.clone();
+            bottomFrame.position.set(0, 2.1 - fh/2 - 0.1, 0.65);
+            scene.add(bottomFrame);
+            const leftFrame = new THREE.Mesh(new THREE.BoxGeometry(ft, fh+0.2, fd), frameMat);
+            leftFrame.position.set(-fw/2 - 0.1, 2.1, 0.65);
+            leftFrame.castShadow = true; leftFrame.receiveShadow = true;
+            scene.add(leftFrame);
+            const rightFrame = leftFrame.clone();
+            rightFrame.position.set(fw/2 + 0.1, 2.1, 0.65);
+            scene.add(rightFrame);
+        },
+        undefined,
+        (err) => console.warn('Image not found, using abstract idol')
+    );
+    
+    // Abstract idol fallback
+    if (!deityPlane) {
+        const idolGroup = new THREE.Group();
+        const goldMatFb = new THREE.MeshStandardMaterial({ color: 0xffd700 });
+        const redMatFb = new THREE.MeshStandardMaterial({ color: 0xb22222 });
+        const baseFb = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.0, 0.25, 6), goldMatFb);
+        baseFb.position.y = 0.9;
+        baseFb.castShadow = true; baseFb.receiveShadow = true;
+        idolGroup.add(baseFb);
+        const bodyFb = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.4, 5), redMatFb);
+        bodyFb.position.y = 1.7;
+        bodyFb.castShadow = true; bodyFb.receiveShadow = true;
+        idolGroup.add(bodyFb);
+        const headFb = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
+        headFb.position.y = 2.4;
+        headFb.castShadow = true; headFb.receiveShadow = true;
+        idolGroup.add(headFb);
+        idolGroup.position.set(0, 1.2, 0.5);
+        scene.add(idolGroup);
+    }
+    
+    // Inner light
+    const innerLight = new THREE.PointLight(0xffaa66, 1.8);
+    innerLight.position.set(0, 2.5, 0.8);
+    scene.add(innerLight);
+    
+    // Trees (simplified)
+    function addTree(x, z, scale) {
+        const treeGroup = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35*scale, 0.45*scale, 2.0*scale), new THREE.MeshStandardMaterial({ color: 0x8b5e3c }));
+        trunk.position.y = 1.0*scale;
+        trunk.castShadow = true; trunk.receiveShadow = true;
+        treeGroup.add(trunk);
+        const foliage = new THREE.Mesh(new THREE.ConeGeometry(1.1*scale, 2.0*scale, 8), new THREE.MeshStandardMaterial({ color: 0x2d5a27 }));
+        foliage.position.y = 2.0*scale;
+        foliage.castShadow = true; foliage.receiveShadow = true;
+        treeGroup.add(foliage);
+        treeGroup.position.set(x, 0, z);
+        scene.add(treeGroup);
+    }
+    addTree(-9, -7, 1.3);
+    addTree(10, -6, 1.1);
+    addTree(-8, 9, 1.2);
+    addTree(9, 8, 1.0);
+    addTree(-11, 3, 1.4);
+    addTree(11, -2, 1.2);
+    
+    // --- Animation Loop with Cursor Interaction ---
+    const clock = new THREE.Clock();
+    let introComplete = false;
+    
+    function animate() {
+        const delta = clock.getDelta();
+        const elapsedTime = performance.now() * 0.001;
+        
+        // Intro camera animation (fly-in)
+        if (!introComplete) {
+            const targetPos = new THREE.Vector3(12, 8, 18);
+            camera.position.lerp(targetPos, 0.02);
+            if (camera.position.distanceTo(targetPos) < 0.5) {
+                introComplete = true;
+                controls.autoRotate = true;
+            }
+        }
+        
+        // Update cursor spotlight
+        raycaster.setFromCamera(mouse, camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const targetPoint = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(plane, targetPoint)) {
+            // Limit spotlight range to temple area
+            targetPoint.y = 3.5;
+            targetPoint.x = Math.max(-6, Math.min(6, targetPoint.x));
+            targetPoint.z = Math.max(-6, Math.min(6, targetPoint.z));
+            cursorLightTarget.position.copy(targetPoint);
+            cursorSpotlight.position.set(targetPoint.x + 2, 8, targetPoint.z + 4);
+        }
+        
+        // Particle animation with mouse repel
+        particles.forEach((particle, i) => {
+            const data = particle.userData;
+            const angle = data.baseAngle + elapsedTime * 0.1 * data.speed;
+            let radius = data.baseRadius;
+            
+            // Mouse influence (repel)
+            if (mouse.x !== 0) {
+                const worldMouse = new THREE.Vector3(mouse.x * 8, 3, mouse.y * 6);
+                const dist = particle.position.distanceTo(worldMouse);
+                if (dist < 3) {
+                    radius += (3 - dist) * 0.5;
+                }
+            }
+            
+            particle.position.x = Math.cos(angle) * radius;
+            particle.position.z = Math.sin(angle) * radius;
+            particle.position.y = data.baseY + Math.sin(elapsedTime * 1.2 + data.offset) * 0.8;
+        });
+        
+        // Pulsing deity image
+        if (deityMaterial) {
+            const pulse = 0.3 + Math.sin(elapsedTime * 2.5) * 0.1;
+            deityMaterial.emissiveIntensity = pulse;
+        }
+        
+        // Star rotation
+        stars.rotation.y += 0.0003;
+        
+        // Flag wave
+        flag.rotation.z = Math.sin(elapsedTime * 5) * 0.05;
+        
+        controls.update();
+        
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    // --- Resize Handler ---
+    window.addEventListener('resize', onWindowResize, false);
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // Preloader
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.style.opacity = '0';
+                preloader.style.visibility = 'hidden';
+            }
+        }, 1000);
+    });
+</script>{% endblock %}
+
+<div id="dailyDarshanWidget" style="position: fixed; bottom: 20px; left: 20px; z-index: 100; max-width: 280px; background: rgba(0,0,0,0.7); border-radius: 12px; padding: 10px; color: white; backdrop-filter: blur(5px); border: 1px solid #ffd700;">
+    {% set darshan = get_today_darshan() %}
+    {% if darshan %}
+        <div style="display: flex; align-items: center; gap: 10px;">
+            {% if darshan.media_type == 'image' %}
+                <img src="{{ url_for('uploaded_file', filename=darshan.filename) }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #ffd700;">
+            {% else %}
+                <div style="width: 60px; height: 60px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #ffd700;">
+                    <i class="fas fa-play" style="color: #ffd700;"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h6 style="margin:0; color: #ffd700;"><i class="fas fa-calendar-day"></i> Today's Darshan</h6>
+                <p style="margin:0; font-size: 0.8rem;">{{ darshan.caption or 'Divine Darshan' }}</p>
+                <button onclick="openDarshanModal()" style="background: none; border: none; color: #ffd700; padding: 0; font-size: 0.7rem;"><i class="fas fa-expand"></i> View</button>
+            </div>
+        </div>
+    {% else %}
+        <p style="margin:0; color: #ccc;"><i class="fas fa-calendar-day"></i> No darshan today</p>
+    {% endif %}
+</div>
+
+<!-- Modal for full view -->
+<div class="modal fade" id="darshanModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="fas fa-calendar-day"></i> Today's Darshan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                {% if darshan %}
+                    {% if darshan.media_type == 'image' %}
+                        <img src="{{ url_for('uploaded_file', filename=darshan.filename) }}" class="img-fluid" style="max-height: 70vh;">
+                    {% else %}
+                        <video controls style="max-width:100%; max-height:70vh;">
+                            <source src="{{ url_for('uploaded_file', filename=darshan.filename) }}" type="video/mp4">
+                        </video>
+                    {% endif %}
+                    {% if darshan.caption %}
+                        <p class="mt-3">{{ darshan.caption }}</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDarshanModal() {
+    var modal = new bootstrap.Modal(document.getElementById('darshanModal'));
+    modal.show();
+}
+</script>
+
+{% block extra_js %}
+<!-- No extra JS needed; preloader handled in module -->
+{% endblock %}

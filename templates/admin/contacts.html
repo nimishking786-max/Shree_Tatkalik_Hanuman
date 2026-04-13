@@ -1,0 +1,25 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h2 class="mt-4">Contact Messages</h2>
+<table class="table">
+    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Subject</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+        {% for m in messages %}
+        <tr>
+            <td>{{ m.id }}</td><td>{{ m.name }}</td><td>{{ m.email }}</td><td>{{ m.subject }}</td>
+            <td>{{ m.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>{% if m.is_read %}<span class="badge bg-success">Read</span>{% else %}<span class="badge bg-warning">Unread</span>{% endif %}</td>
+            <td>
+                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#msgModal{{ m.id }}">View</button>
+                <a href="{{ url_for('admin_contact_mark_read', id=m.id) }}" class="btn btn-sm btn-success">Mark Read</a>
+                <a href="{{ url_for('admin_contact_delete', id=m.id) }}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        <!-- Modal for message detail -->
+        <div class="modal fade" id="msgModal{{ m.id }}" tabindex="-1">
+            <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>{{ m.subject }}</h5></div><div class="modal-body"><p>{{ m.message }}</p></div></div></div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

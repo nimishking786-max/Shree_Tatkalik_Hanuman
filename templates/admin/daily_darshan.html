@@ -1,0 +1,71 @@
+{% extends "admin/layout.html" %}
+{% block title %}Daily Darshan Management{% endblock %}
+{% block extra_css %}
+<style>
+    .preview-container { max-width: 500px; margin-top: 20px; }
+    .preview-media { max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+</style>
+{% endblock %}
+{% block content %}
+<h2 class="mt-4"><i class="fas fa-calendar-day"></i> Daily Darshan Management</h2>
+<p class="text-muted">Upload an image or video for today's darshan. It will automatically appear on the home page.</p>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Upload Today's Darshan ({{ now().strftime('%d %B %Y') }})</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label>Media Type *</label>
+                        <select name="media_type" class="form-select" required>
+                            <option value="image">Image (JPG, PNG, GIF)</option>
+                            <option value="video">Video (MP4, WebM, MOV)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Select File *</label>
+                        <input type="file" name="media_file" class="form-control" accept="image/*,video/*" required>
+                        <small class="text-muted">Max size: 16MB</small>
+                    </div>
+                    <div class="mb-3">
+                        <label>Caption (Optional)</label>
+                        <input type="text" name="caption" class="form-control" placeholder="e.g., Morning Aarti">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload Darshan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Today's Darshan Preview</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if darshan %}
+                    <div class="preview-container">
+                        {% if darshan.media_type == 'image' %}
+                            <img src="{{ url_for('uploaded_file', filename=darshan.filename) }}" class="preview-media" alt="Today's Darshan">
+                        {% else %}
+                            <video controls class="preview-media">
+                                <source src="{{ url_for('uploaded_file', filename=darshan.filename) }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% endif %}
+                        {% if darshan.caption %}
+                            <p class="mt-2"><strong>{{ darshan.caption }}</strong></p>
+                        {% endif %}
+                        <p class="text-muted small">Uploaded: {{ darshan.uploaded_at.strftime('%d %b %Y %H:%M') }}</p>
+                        <a href="{{ url_for('admin_daily_darshan_delete', id=darshan.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this darshan?')"><i class="fas fa-trash"></i> Delete</a>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No darshan uploaded for today yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Donation | Shree Tatkalik Hanuman{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4"><i class="fas fa-hand-holding-heart"></i> Make a Donation</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Support Our Temple</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="donationForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone (Optional)</label>
+                                <input type="tel" name="phone" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Donation Amount (₹) *</label>
+                                <input type="number" name="amount" id="donationAmount" class="form-control" step="1" min="1" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Quick Amounts</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-outline-primary amount-btn" data-amount="101">₹101</button>
+                                    <button type="button" class="btn btn-outline-primary amount-btn" data-amount="501">₹501</button>
+                                    <button type="button" class="btn btn-outline-primary amount-btn" data-amount="1100">₹1,100</button>
+                                    <button type="button" class="btn btn-outline-primary amount-btn" data-amount="5100">₹5,100</button>
+                                    <button type="button" class="btn btn-outline-primary amount-btn" data-amount="11000">₹11,000</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Purpose</label>
+                                <select name="purpose" class="form-select">
+                                    <option value="General Donation">General Donation</option>
+                                    <option value="Anna Daan">Anna Daan (Food)</option>
+                                    <option value="Vastra Daan">Vastra Daan (Clothing)</option>
+                                    <option value="Temple Maintenance">Temple Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Method</label>
+                                <select name="payment_method" class="form-select" id="paymentMethod" required>
+                                    <option value="UPI">UPI / QR Code</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Card">Credit/Debit Card</option>
+                                </select>
+                            </div>
+                            <div class="col-12 payment-details" id="upiDetails" style="display:none;">
+                                <div class="alert alert-info">
+                                    <strong>Scan QR Code:</strong><br>
+                                    <img src="{{ url_for('static', filename='images/qr-placeholder.png') }}" width="150" class="my-2"><br>
+                                    UPI ID: temple@ybl
+                                </div>
+                            </div>
+                            <div class="col-12 payment-details" id="bankDetails" style="display:none;">
+                                <div class="alert alert-info">
+                                    <strong>Bank Account Details:</strong><br>
+                                    A/c Name: Shree Tatkalik Hanuman Trust<br>
+                                    A/c No: 123456789012<br>
+                                    IFSC: SBIN0001234<br>
+                                    Bank: State Bank of India
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Transaction Reference (if any)</label>
+                                <input type="text" name="transaction_id" class="form-control" placeholder="e.g., UPI Ref No.">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Message (Optional)</label>
+                                <textarea name="message" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="anonymous" value="yes" id="anonymousCheck">
+                                    <label class="form-check-label" for="anonymousCheck">Make this donation anonymous</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-donate"></i> Donate Now</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Quick amount buttons
+    document.querySelectorAll('.amount-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('donationAmount').value = this.dataset.amount;
+        });
+    });
+
+    // Show payment details based on selection
+    const paymentSelect = document.getElementById('paymentMethod');
+    const upiDiv = document.getElementById('upiDetails');
+    const bankDiv = document.getElementById('bankDetails');
+    paymentSelect.addEventListener('change', function() {
+        upiDiv.style.display = 'none';
+        bankDiv.style.display = 'none';
+        if (this.value === 'UPI') upiDiv.style.display = 'block';
+        else if (this.value === 'Bank Transfer') bankDiv.style.display = 'block';
+    });
+</script>
+{% endblock %}

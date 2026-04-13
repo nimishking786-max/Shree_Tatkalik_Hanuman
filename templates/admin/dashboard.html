@@ -1,0 +1,192 @@
+{% extends "admin/layout.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+    <div>
+        <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-secondary"><i class="fas fa-cog"></i> Settings</a>
+        <a href="{{ url_for('home') }}" target="_blank" class="btn btn-outline-primary"><i class="fas fa-eye"></i> View Site</a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mt-3">
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-primary text-white mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Total Bookings</h6>
+                        <h2 class="mb-0">{{ bookings_count }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a href="{{ url_for('admin_bookings') }}" class="text-white text-decoration-none">View Details</a>
+                <i class="fas fa-arrow-right text-white"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-success text-white mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Total Donations</h6>
+                        <h2 class="mb-0">₹{{ "%.2f"|format(donations_total) }}</h2>
+                    </div>
+                    <i class="fas fa-donate fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a href="{{ url_for('admin_donations') }}" class="text-white text-decoration-none">View Details</a>
+                <i class="fas fa-arrow-right text-white"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-warning text-white mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Gallery Images</h6>
+                        <h2 class="mb-0">{{ gallery_count }}</h2>
+                    </div>
+                    <i class="fas fa-images fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a href="{{ url_for('admin_gallery') }}" class="text-white text-decoration-none">Manage</a>
+                <i class="fas fa-arrow-right text-white"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-danger text-white mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Unread Messages</h6>
+                        <h2 class="mb-0">{{ messages_count }}</h2>
+                    </div>
+                    <i class="fas fa-envelope fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a href="{{ url_for('admin_contacts') }}" class="text-white text-decoration-none">View Messages</a>
+                <i class="fas fa-arrow-right text-white"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header"><i class="fas fa-chart-line me-1"></i> Donations (Last 7 Days)</div>
+            <div class="card-body">
+                <canvas id="donationChart" width="100%" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header"><i class="fas fa-clock me-1"></i> Recent Activity</div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for b in recent_bookings[:3] %}
+                    <div class="list-group-item"><i class="fas fa-box text-primary"></i> {{ b.name }} booked prasad <small class="text-muted">{{ b.created_at.strftime('%d %b %H:%M') }}</small></div>
+                    {% endfor %}
+                    {% for d in recent_donations[:3] %}
+                    <div class="list-group-item"><i class="fas fa-donate text-success"></i> {{ d.name }} donated ₹{{ d.amount }} <small class="text-muted">{{ d.created_at.strftime('%d %b %H:%M') }}</small></div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tables Tabs -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#recent-bookings">Recent Bookings</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#recent-donations">Recent Donations</button></li>
+</ul>
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="recent-bookings">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0" id="bookingsTable">
+                    <thead><tr><th>ID</th><th>Name</th><th>Prasad</th><th>Date</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for b in recent_bookings %}
+                        <tr>
+                            <td>#{{ b.id }}</td><td>{{ b.name }}</td><td>{{ b.prasad_type }} ({{ b.quantity }})</td>
+                            <td>{{ b.booking_date }}</td>
+                            <td><span class="badge bg-{{ 'success' if b.status=='completed' else 'warning' }}">{{ b.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="recent-donations">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>ID</th><th>Name</th><th>Amount</th><th>Purpose</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for d in recent_donations %}
+                        <tr>
+                            <td>#{{ d.id }}</td><td>{{ d.name if not d.anonymous else 'Anonymous' }}</td>
+                            <td>₹{{ d.amount }}</td><td>{{ d.purpose }}</td>
+                            <td><span class="badge bg-{{ 'success' if d.status=='completed' else 'warning' }}">{{ d.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    // Fetch donation chart data
+    fetch('/admin/donation-chart-data')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('donationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Donations (₹)',
+                        data: data.data,
+                        borderColor: '#8B0000',
+                        backgroundColor: 'rgba(139, 0, 0, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        });
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#bookingsTable').DataTable({ pageLength: 5, lengthChange: false, searching: false });
+    });
+</script>
+<!-- Add jQuery if not already included -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+{% endblock %}

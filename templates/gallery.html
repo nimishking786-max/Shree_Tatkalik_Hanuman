@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Gallery | Shree Tatkalik Hanuman{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4"><i class="fas fa-images"></i> Temple Gallery</h2>
+    <div class="row g-4">
+        {% for image in images %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card gallery-card h-100 shadow-sm">
+                <img src="{{ url_for('uploaded_file', filename=image.filename) }}" class="card-img-top gallery-img" style="height:200px; object-fit:cover; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#lightboxModal" data-src="{{ url_for('uploaded_file', filename=image.filename) }}" data-title="{{ image.title }}" data-desc="{{ image.description }}">
+                <div class="card-body">
+                    <h6 class="card-title">{{ image.title }}</h6>
+                    <p class="card-text small text-muted">{{ image.description[:50] }}...</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">
+            <p>No images available yet. Check back soon!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Lightbox Modal -->
+<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="lightboxImage" src="" class="img-fluid" style="max-height:80vh;">
+                <h5 id="lightboxTitle" class="text-white mt-3"></h5>
+                <p id="lightboxDesc" class="text-white-50"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('lightboxModal');
+        const modalImg = document.getElementById('lightboxImage');
+        const modalTitle = document.getElementById('lightboxTitle');
+        const modalDesc = document.getElementById('lightboxDesc');
+
+        document.querySelectorAll('.gallery-img').forEach(img => {
+            img.addEventListener('click', function() {
+                modalImg.src = this.dataset.src;
+                modalTitle.textContent = this.dataset.title;
+                modalDesc.textContent = this.dataset.desc;
+            });
+        });
+    });
+</script>
+{% endblock %}
