@@ -10,19 +10,18 @@ import secrets
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fd7095321841446bb33caf12d58aeba9')
-
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 # Database configuration
 if os.environ.get('RENDER'):
-    # Running on Render - use PostgreSQL
+    # We are on Render. Use PostgreSQL ONLY.
     database_url = os.environ.get('DATABASE_URL')
-    if database_url:
-        database_url = database_url.replace('postgres://', 'postgresql://')
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    else:
-        raise ValueError("DATABASE_URL not set on Render")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is not set on Render!")
+    # Render uses 'postgres://' but SQLAlchemy needs 'postgresql://'
+    database_url = database_url.replace('postgres://', 'postgresql://')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    # Local development - use SQLite
+    # Local development: use SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -30,14 +29,11 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 # Upload folder configuration
 if os.environ.get('RENDER'):
-    PERSISTENT_DIR = '/opt/render/project/src/persistent'
-    os.makedirs(PERSISTENT_DIR, exist_ok=True)
-    app.config['UPLOAD_FOLDER'] = os.path.join(PERSISTENT_DIR, 'uploads')
+    UPLOAD_DIR = '/opt/render/project/src/persistent/uploads'
 else:
-    app.config['UPLOAD_FOLDER'] = 'static/uploads'
-
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
+    UPLOAD_DIR = 'static/uploads'
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_DIR
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'user_login'
