@@ -14,14 +14,13 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fd7095321841446bb33caf1
 
 # Database configuration
 if os.environ.get('RENDER'):
-    # Running on Render - use PostgreSQL from environment variable
+    # Running on Render - use PostgreSQL
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
-        # Render uses 'postgres://' but SQLAlchemy requires 'postgresql://'
         database_url = database_url.replace('postgres://', 'postgresql://')
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
-        raise ValueError("DATABASE_URL environment variable not set on Render")
+        raise ValueError("DATABASE_URL not set on Render")
 else:
     # Local development - use SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
@@ -31,12 +30,10 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 # Upload folder configuration
 if os.environ.get('RENDER'):
-    # On Render, use persistent disk for uploads
     PERSISTENT_DIR = '/opt/render/project/src/persistent'
     os.makedirs(PERSISTENT_DIR, exist_ok=True)
-    app.config['UPLOAD_FOLDER'] = f'{PERSISTENT_DIR}/uploads'
+    app.config['UPLOAD_FOLDER'] = os.path.join(PERSISTENT_DIR, 'uploads')
 else:
-    # Local development
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
