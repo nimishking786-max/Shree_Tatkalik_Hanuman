@@ -1,1 +1,1 @@
-web: gunicorn app:app --log-level=debug --preload
+web: gunicorn app:app --log-level debug --capture-output --enable-stdio-inheritance
