@@ -11,23 +11,32 @@ import secrets
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
+
+# Database configuration
+if os.environ.get('RENDER'):
+    # Running on Render - use PostgreSQL from environment variable
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Render uses 'postgres://' but SQLAlchemy requires 'postgresql://'
+        database_url = database_url.replace('postgres://', 'postgresql://')
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        raise ValueError("DATABASE_URL environment variable not set on Render")
+else:
+    # Local development - use SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-# Use Render's persistent disk mount path if available
+# Upload folder configuration
 if os.environ.get('RENDER'):
-    # Persistent disk is mounted at /opt/render/project/src/
+    # On Render, use persistent disk for uploads
     PERSISTENT_DIR = '/opt/render/project/src/persistent'
     os.makedirs(PERSISTENT_DIR, exist_ok=True)
-    # Point database to persistent directory
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{PERSISTENT_DIR}/temple.db'
-    # Point uploads to persistent directory
     app.config['UPLOAD_FOLDER'] = f'{PERSISTENT_DIR}/uploads'
 else:
     # Local development
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -36,7 +45,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'user_login'
 login_manager.login_message = 'Please log in to access this page.'
-
 # -------------------------------
 # Database Models
 # -------------------------------
