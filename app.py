@@ -16,8 +16,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
-app.config['MAIL_USERNAME'] = os.environ.get('tatkalikhanumantemple@gmail.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('bqzuvtcxcotnnvds')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'tatkalikhanumantemple@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'bqzuvtcxcotnnvds')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'tatkalikhanumantemple@gmail.com')
 app.config['ADMIN_EMAIL'] = os.environ.get('ADMIN_EMAIL', 'tatkalikhanumantemple@gmail.com')
 # ============================================
@@ -64,7 +64,7 @@ login_manager.login_message = 'Please log in to access this page.'
 
 mail = Mail(app)
 def send_email(to, subject, template, **kwargs):
-    """Send an email using a template."""
+    print(f"📧 Attempting to send email to {to} with subject '{subject}'", flush=True)
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
         print("Email credentials not configured. Skipping email.")
         return
@@ -917,6 +917,29 @@ def create_admin():
             db.session.add(admin)
             db.session.commit()
             print("✅ Default admin created: username='admin', password='admin123'")
+
+@app.route('/check-email-config')
+def check_email_config():
+    import os
+    return {
+        'MAIL_USERNAME': bool(app.config['MAIL_USERNAME']),
+        'MAIL_PASSWORD': bool(app.config['MAIL_PASSWORD']),
+        'MAIL_DEFAULT_SENDER': app.config['MAIL_DEFAULT_SENDER'],
+        'ADMIN_EMAIL': app.config['ADMIN_EMAIL'],
+    }
+
+@app.route('/send-test-email')
+def send_test_email():
+    try:
+        msg = Message(
+            subject="Test from Temple Site",
+            recipients=[app.config['ADMIN_EMAIL']],
+            body="This is a test email from your Flask app on Render."
+        )
+        mail.send(msg)
+        return "Test email sent! Check your inbox/spam."
+    except Exception as e:
+        return f"ERROR: {str(e)}"
 
 if __name__ == '__main__':
     create_admin()
