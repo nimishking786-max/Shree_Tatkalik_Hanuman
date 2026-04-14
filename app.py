@@ -407,14 +407,14 @@ def contact():
             )
             db.session.add(message)
             db.session.commit()
-            
+
             # ========== EMAIL NOTIFICATION ==========
             send_email(
                 to=message.email,
                 subject='We Received Your Message - Shree Tatkalik Hanuman',
                 template='emails/contact_confirmation.html',
                 name=message.name,
-                subject=message.subject
+                msg_subject=message.subject
             )
             if app.config['ADMIN_EMAIL']:
                 send_email(
@@ -422,16 +422,17 @@ def contact():
                     subject=f'New Contact Message: {message.subject}',
                     template='emails/contact_confirmation.html',
                     name=message.name,
-                    subject=message.subject
+                    msg_subject=message.subject
                 )
             # ========================================
-            
+
             flash('Your message has been sent. We will get back to you soon.', 'success')
             return redirect(url_for('contact'))
+
         except Exception as e:
             flash('An error occurred. Please try again.', 'danger')
-    return render_template('contact.html')
 
+    return render_template('contact.html')
 # -------------------------------
 # User Authentication Routes
 # -------------------------------
