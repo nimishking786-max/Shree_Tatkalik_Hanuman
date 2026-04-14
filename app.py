@@ -5,12 +5,21 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timezone, timedelta
+from flask_mail import Mail, Message
 from functools import wraps
 import secrets
 
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
+# Email Configuration (use environment variables on Render)
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.environ.get('tatkalikhanumantemple@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('bqzuvtcxcotnnvds')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'tatkalikhanumantemple@gmail.com')
+app.config['ADMIN_EMAIL'] = os.environ.get('ADMIN_EMAIL', 'tatkalikhanumantemple@gmail.com')
 # ============================================
 # DATABASE CONFIGURATION
 # ============================================
@@ -52,6 +61,20 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'user_login'
 login_manager.login_message = 'Please log in to access this page.'
+
+mail = Mail(app)
+def send_email(to, subject, template, **kwargs):
+    """Send an email using a template."""
+    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+        print("Email credentials not configured. Skipping email.")
+        return
+    try:
+        msg = Message(subject, recipients=[to])
+        msg.html = render_template(template, **kwargs)
+        mail.send(msg)
+        print(f"Email sent to {to}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 # -------------------------------
 # Database Models
 # -------------------------------
@@ -285,12 +308,34 @@ def prasad_booking():
             )
             db.session.add(booking)
             db.session.commit()
+            
+            # ========== EMAIL NOTIFICATION ==========
+            send_email(
+                to=booking.email,
+                subject='Prasad Booking Confirmation - Shree Tatkalik Hanuman',
+                template='emails/prasad_confirmation.html',
+                name=booking.name,
+                prasad_type=booking.prasad_type,
+                quantity=booking.quantity,
+                booking_date=booking.booking_date.strftime('%d %b %Y')
+            )
+            if app.config['ADMIN_EMAIL']:
+                send_email(
+                    to=app.config['ADMIN_EMAIL'],
+                    subject=f'New Prasad Booking - {booking.prasad_type}',
+                    template='emails/prasad_confirmation.html',
+                    name=booking.name,
+                    prasad_type=booking.prasad_type,
+                    quantity=booking.quantity,
+                    booking_date=booking.booking_date.strftime('%d %b %Y')
+                )
+            # ========================================
+            
             flash('Your prasad booking request has been submitted successfully!', 'success')
             return redirect(url_for('prasad_booking'))
         except Exception as e:
             flash('An error occurred. Please try again.', 'danger')
     return render_template('prasad_booking.html')
-
 
 @app.route('/donation', methods=['GET', 'POST'])
 @login_required
@@ -312,12 +357,34 @@ def donation():
             )
             db.session.add(donation)
             db.session.commit()
+            
+            # ========== EMAIL NOTIFICATION ==========
+            send_email(
+                to=donation.email,
+                subject='Thank You for Your Donation - Shree Tatkalik Hanuman',
+                template='emails/donation_confirmation.html',
+                name=donation.name,
+                amount=donation.amount,
+                purpose=donation.purpose,
+                transaction_id=donation.transaction_id
+            )
+            if app.config['ADMIN_EMAIL']:
+                send_email(
+                    to=app.config['ADMIN_EMAIL'],
+                    subject=f'New Donation Received - ₹{donation.amount}',
+                    template='emails/donation_confirmation.html',
+                    name=donation.name,
+                    amount=donation.amount,
+                    purpose=donation.purpose,
+                    transaction_id=donation.transaction_id
+                )
+            # ========================================
+            
             flash('Thank you for your generous donation!', 'success')
             return redirect(url_for('donation'))
         except Exception as e:
             flash('An error occurred. Please try again.', 'danger')
     return render_template('donation.html')
-
 
 @app.route('/gallery')
 @page_visible('gallery')
@@ -340,12 +407,30 @@ def contact():
             )
             db.session.add(message)
             db.session.commit()
+            
+            # ========== EMAIL NOTIFICATION ==========
+            send_email(
+                to=message.email,
+                subject='We Received Your Message - Shree Tatkalik Hanuman',
+                template='emails/contact_confirmation.html',
+                name=message.name,
+                subject=message.subject
+            )
+            if app.config['ADMIN_EMAIL']:
+                send_email(
+                    to=app.config['ADMIN_EMAIL'],
+                    subject=f'New Contact Message: {message.subject}',
+                    template='emails/contact_confirmation.html',
+                    name=message.name,
+                    subject=message.subject
+                )
+            # ========================================
+            
             flash('Your message has been sent. We will get back to you soon.', 'success')
             return redirect(url_for('contact'))
         except Exception as e:
             flash('An error occurred. Please try again.', 'danger')
     return render_template('contact.html')
-
 
 # -------------------------------
 # User Authentication Routes
