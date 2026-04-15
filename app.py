@@ -628,6 +628,16 @@ def fix_db():
     except Exception as e:
         return f"Error: {e}"
 
+@app.route('/add-missing-column')
+def add_missing_column():
+    try:
+        from sqlalchemy import text
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE'))
+        db.session.commit()
+        return "✅ Column 'is_verified' added successfully! You can now delete this route."
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
 # -------------------------------
 # Admin Routes
 # -------------------------------
