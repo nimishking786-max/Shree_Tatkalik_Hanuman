@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timezone, timedelta
 from flask_mail import Mail, Message
 from functools import wraps
+from itsdangerous import URLSafeTimedSerializer
 import secrets
 
 # Initialize Flask app
@@ -89,6 +90,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     bookings = db.relationship('PrasadBooking', backref='user', lazy=True)
     donations = db.relationship('Donation', backref='user', lazy=True)
+    is_verified = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -259,6 +261,17 @@ def page_visible(page_name):
         return decorated_function
     return decorator
 
+def generate_verification_token(email):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt='email-verification')
+
+def confirm_verification_token(token, expiration=3600):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(token, salt='email-verification', max_age=expiration)
+    except:
+        return False
+    return email
 
 # -------------------------------
 # Context Processors
@@ -467,9 +480,22 @@ def register():
 
         user = User(username=username, email=email, full_name=full_name, phone=phone, role='user')
         user.set_password(password)
+        user.is_verified = False   # ✅ new
         db.session.add(user)
         db.session.commit()
-        flash('Registration successful! Please log in.', 'success')
+
+        # Generate verification token and send email
+        token = generate_verification_token(user.email)
+        verify_url = url_for('verify_email', token=token, _external=True)
+        send_email(
+            to=user.email,
+            subject='Verify Your Email - Shree Tatkalik Hanuman',
+            template='emails/verify_email.html',
+            name=user.full_name or user.username,
+            verify_url=verify_url
+        )
+
+        flash('Registration successful! Please check your email to verify your account.', 'success')
         return redirect(url_for('user_login'))
     return render_template('register.html')
 
@@ -488,6 +514,10 @@ def user_login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            # ✅ Check if email is verified
+            if not user.is_verified:
+                flash('Please verify your email address before logging in.', 'warning')
+                return redirect(url_for('user_login'))
             login_user(user)
             flash('Logged in successfully.', 'success')
             next_page = request.args.get('next')
@@ -500,7 +530,6 @@ def user_login():
         else:
             flash('Invalid username or password.', 'danger')
     return render_template('login.html')
-
 
 @app.route('/logout')
 @login_required
@@ -545,6 +574,47 @@ def profile():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/verify/<token>')
+def verify_email(token):
+    email = confirm_verification_token(token)
+    if not email:
+        flash('The verification link is invalid or has expired.', 'danger')
+        return redirect(url_for('user_login'))
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('user_login'))
+
+    if user.is_verified:
+        flash('Account already verified. Please log in.', 'info')
+    else:
+        user.is_verified = True
+        db.session.commit()
+        flash('Your email has been verified! You can now log in.', 'success')
+
+    return redirect(url_for('user_login'))
+
+@app.route('/resend-verification', methods=['GET', 'POST'])
+def resend_verification():
+    if request.method == 'POST':
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
+        if user and not user.is_verified:
+            token = generate_verification_token(user.email)
+            verify_url = url_for('verify_email', token=token, _external=True)
+            send_email(
+                to=user.email,
+                subject='Verify Your Email - Shree Tatkalik Hanuman',
+                template='emails/verify_email.html',
+                name=user.full_name or user.username,
+                verify_url=verify_url
+            )
+            flash('Verification email resent. Please check your inbox.', 'success')
+        else:
+            flash('Email not found or already verified.', 'warning')
+        return redirect(url_for('user_login'))
+    return render_template('resend_verification.html')
 
 # -------------------------------
 # Admin Routes
