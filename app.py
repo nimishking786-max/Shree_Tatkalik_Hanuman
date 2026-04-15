@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from flask_mail import Mail, Message
 from functools import wraps
 from itsdangerous import URLSafeTimedSerializer
+from app import app, db, User
 import secrets
 
 # Initialize Flask app
@@ -616,6 +617,18 @@ def resend_verification():
         return redirect(url_for('user_login'))
     return render_template('resend_verification.html')
 
+@app.route('/fix-db')
+def fix_db():
+    try:
+        db.session.execute('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE')
+        admin = User.query.filter_by(username='admin').first()
+        if admin:
+            admin.is_verified = True
+        db.session.commit()
+        return "✅ Database fixed. Admin can now log in."
+    except Exception as e:
+        return f"Error: {e}"
+
 # -------------------------------
 # Admin Routes
 # -------------------------------
@@ -968,26 +981,46 @@ def admin_daily_darshan_delete(id):
 # Create default admin user if not exists
 # -------------------------------
 def create_admin():
-    """Create database tables and default admin user."""
+    """Ensure database schema is up-to-date and default admin exists."""
     with app.app_context():
         try:
-            # Test connection and create tables if needed
+            # Test connection
             db.session.execute('SELECT 1')
         except Exception:
-            # Tables don't exist or connection issue – create all
+            # Tables don't exist – create all
             db.create_all()
             print("✅ Database tables created successfully!")
-        finally:
-            db.session.remove()
-        
-        # Create default admin if not exists
-        if not User.query.filter_by(username='admin').first():
+        else:
+            # Tables exist – check for missing columns
+            try:
+                # Try to add is_verified column if it doesn't exist (PostgreSQL)
+                db.session.execute('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE')
+                db.session.commit()
+                print("✅ Verified is_verified column exists")
+            except Exception as e:
+                db.session.rollback()
+                # SQLite fallback (for local dev)
+                try:
+                    db.session.execute('ALTER TABLE user ADD COLUMN is_verified BOOLEAN DEFAULT FALSE')
+                    db.session.commit()
+                    print("✅ Added is_verified column (SQLite)")
+                except Exception:
+                    pass  # Column already exists or other error – ignore
+
+        # Ensure admin user exists
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
             admin = User(username='admin', email='admin@temple.com', role='admin', full_name='Administrator')
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
             print("✅ Default admin created: username='admin', password='admin123'")
-
+        else:
+            # Ensure admin is verified
+            if not admin.is_verified:
+                admin.is_verified = True
+                db.session.commit()
+                print("✅ Admin marked as verified")
 @app.route('/check-email-config')
 def check_email_config():
     import os
