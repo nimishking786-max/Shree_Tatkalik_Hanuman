@@ -7,9 +7,59 @@
         <div class="col-lg-8">
             <div class="card shadow">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Support Our Temple</h5>
+                    <h5 class="mb-0">Choose Payment Method</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Payment Method Selection -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100 payment-tab active" data-method="upi">UPI Payment</button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100 payment-tab" data-method="qr">QR Code</button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100 payment-tab" data-method="bank">Bank Transfer</button>
+                        </div>
+                    </div>
+
+                    <!-- UPI Payment Section -->
+                    <div class="payment-section" id="upi-section">
+                        <h5><i class="fas fa-mobile-alt"></i> Pay via UPI</h5>
+                        <p>Click the button below to open your UPI app and pay instantly.</p>
+                        <div class="d-grid">
+                            <a href="#" id="upi-link" class="btn btn-primary btn-lg">
+                                <i class="fas fa-qrcode"></i> Pay ₹<span id="upi-amount-display">0</span> via UPI
+                            </a>
+                        </div>
+                        <p class="mt-2 text-muted">UPI ID: <strong>{{ settings.upi_id }}</strong></p>
+                    </div>
+
+                    <!-- QR Code Section -->
+                    <div class="payment-section d-none" id="qr-section">
+                        <h5><i class="fas fa-qrcode"></i> Scan QR Code</h5>
+                        {% if settings.upi_qr_filename %}
+                        <img src="{{ url_for('uploaded_file', filename=settings.upi_qr_filename) }}" class="img-fluid" style="max-width: 250px;" alt="UPI QR Code">
+                        {% else %}
+                        <div class="alert alert-warning">QR code not uploaded by admin yet. Please use UPI or bank transfer.</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Bank Transfer Section -->
+                    <div class="payment-section d-none" id="bank-section">
+                        <h5><i class="fas fa-university"></i> Bank Transfer</h5>
+                        <table class="table table-bordered">
+                            <tr><th>Bank Name</th><td>{{ settings.bank_name }}</td></tr>
+                            <tr><th>Account Name</th><td>{{ settings.bank_account_name }}</td></tr>
+                            <tr><th>Account Number</th><td>{{ settings.bank_account_number }}</td></tr>
+                            <tr><th>IFSC Code</th><td>{{ settings.bank_ifsc }}</td></tr>
+                            <tr><th>Branch</th><td>{{ settings.bank_branch }}</td></tr>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <!-- Donation Form -->
                     <form method="POST" id="donationForm">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -48,32 +98,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Payment Method</label>
-                                <select name="payment_method" class="form-select" id="paymentMethod" required>
-                                    <option value="UPI">UPI / QR Code</option>
-                                    <option value="Bank Transfer">Bank Transfer</option>
-                                    <option value="Card">Credit/Debit Card</option>
-                                </select>
-                            </div>
-                            <div class="col-12 payment-details" id="upiDetails" style="display:none;">
-                                <div class="alert alert-info">
-                                    <strong>Scan QR Code:</strong><br>
-                                    <img src="{{ url_for('static', filename='images/qr-placeholder.png') }}" width="150" class="my-2"><br>
-                                    UPI ID: temple@ybl
-                                </div>
-                            </div>
-                            <div class="col-12 payment-details" id="bankDetails" style="display:none;">
-                                <div class="alert alert-info">
-                                    <strong>Bank Account Details:</strong><br>
-                                    A/c Name: Shree Tatkalik Hanuman Trust<br>
-                                    A/c No: 123456789012<br>
-                                    IFSC: SBIN0001234<br>
-                                    Bank: State Bank of India
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Transaction Reference (if any)</label>
-                                <input type="text" name="transaction_id" class="form-control" placeholder="e.g., UPI Ref No.">
+                                <label class="form-label">Transaction Reference *</label>
+                                <input type="text" name="transaction_id" class="form-control" placeholder="UPI Ref No. / Bank Ref No." required>
+                                <small class="text-muted">After payment, enter the transaction ID from your UPI app or bank.</small>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Message (Optional)</label>
@@ -86,7 +113,7 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-donate"></i> Donate Now</button>
+                                <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-donate"></i> Confirm Donation</button>
                             </div>
                         </div>
                     </form>
@@ -101,18 +128,38 @@
     document.querySelectorAll('.amount-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.getElementById('donationAmount').value = this.dataset.amount;
+            updateUPILink();
         });
     });
 
-    // Show payment details based on selection
-    const paymentSelect = document.getElementById('paymentMethod');
-    const upiDiv = document.getElementById('upiDetails');
-    const bankDiv = document.getElementById('bankDetails');
-    paymentSelect.addEventListener('change', function() {
-        upiDiv.style.display = 'none';
-        bankDiv.style.display = 'none';
-        if (this.value === 'UPI') upiDiv.style.display = 'block';
-        else if (this.value === 'Bank Transfer') bankDiv.style.display = 'block';
+    // Update UPI link when amount changes
+    document.getElementById('donationAmount').addEventListener('input', updateUPILink);
+
+    function updateUPILink() {
+        const amount = document.getElementById('donationAmount').value;
+        document.getElementById('upi-amount-display').textContent = amount;
+        const upiId = "{{ settings.upi_id }}";
+        const payeeName = "Shree Tatkalik Hanuman";
+        const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Donation`;
+        document.getElementById('upi-link').href = upiLink;
+    }
+
+    // Payment method tabs
+    document.querySelectorAll('.payment-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.payment-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const method = this.dataset.method;
+            document.getElementById('upi-section').classList.add('d-none');
+            document.getElementById('qr-section').classList.add('d-none');
+            document.getElementById('bank-section').classList.add('d-none');
+            if (method === 'upi') document.getElementById('upi-section').classList.remove('d-none');
+            else if (method === 'qr') document.getElementById('qr-section').classList.remove('d-none');
+            else if (method === 'bank') document.getElementById('bank-section').classList.remove('d-none');
+        });
     });
+
+    // Initialize UPI link on page load
+    updateUPILink();
 </script>
 {% endblock %}
