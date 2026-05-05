@@ -1,10 +1,38 @@
 <div id="preloader">
-    <div class="preloader-content">
-        <div class="om-symbol">॥ ॐ ॥</div>
-        <div class="spinner">
-            <div class="double-bounce1"></div>
-            <div class="double-bounce2"></div>
-        </div>
-        <div class="loading-text">Loading Blessings...</div>
+  <!-- Rotating sacred rings -->
+  <div class="preloader-ring-outer"></div>
+  <div class="preloader-ring-inner"></div>
+
+  <!-- Floating sparks -->
+  <div class="preloader-sparks" id="preloaderSparks"></div>
+
+  <!-- Center content -->
+  <div class="preloader-content">
+    <div class="om-symbol">॥ ॐ ॥</div>
+    <div class="preloader-mantra">श्री हनुमते नमः</div>
+    <div class="preloader-dots">
+      <span></span><span></span><span></span>
     </div>
+    <div class="loading-text">Loading Blessings…</div>
+  </div>
 </div>
+
+<script>
+// Generate floating sparks
+(function() {
+  const sparks = document.getElementById('preloaderSparks');
+  if (!sparks) return;
+  for (let i = 0; i < 25; i++) {
+    const s = document.createElement('div');
+    s.className = 'preloader-spark';
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.bottom = '-4px';
+    s.style.animationDuration = (3 + Math.random() * 5) + 's';
+    s.style.animationDelay = (Math.random() * 5) + 's';
+    s.style.width = s.style.height = (1 + Math.random() * 3) + 'px';
+    s.style.background = Math.random() > 0.5 ? '#ffd700' : '#ff8800';
+    s.style.boxShadow = '0 0 4px #ffd700';
+    sparks.appendChild(s);
+  }
+})();
+</script>
