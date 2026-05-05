@@ -480,22 +480,11 @@ def register():
 
         user = User(username=username, email=email, full_name=full_name, phone=phone, role='user')
         user.set_password(password)
-        user.is_verified = False   # ✅ new
+        user.is_verified = True   # Auto-verify since verification is disabled
         db.session.add(user)
         db.session.commit()
 
-        # Generate verification token and send email
-        token = generate_verification_token(user.email)
-        verify_url = url_for('verify_email', token=token, _external=True)
-        send_email(
-            to=user.email,
-            subject='Verify Your Email - Shree Tatkalik Hanuman',
-            template='emails/verify_email.html',
-            name=user.full_name or user.username,
-            verify_url=verify_url
-        )
-
-        flash('Registration successful! Please check your email to verify your account.', 'success')
+        flash('Registration successful! You can now log in.', 'success')
         return redirect(url_for('user_login'))
     return render_template('register.html')
 
@@ -514,10 +503,6 @@ def user_login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
-            # ✅ Check if email is verified
-            if not user.is_verified:
-                flash('Please verify your email address before logging in.', 'warning')
-                return redirect(url_for('user_login'))
             login_user(user)
             flash('Logged in successfully.', 'success')
             next_page = request.args.get('next')
