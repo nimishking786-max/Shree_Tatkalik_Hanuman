@@ -1,58 +1,159 @@
 {% extends "base.html" %}
 {% block title %}Gallery | Shree Tatkalik Hanuman{% endblock %}
+
+{% block extra_css %}
+<style>
+.gallery-grid {
+    columns: 3 280px;
+    column-gap: 1.2rem;
+}
+.gallery-item {
+    break-inside: avoid;
+    margin-bottom: 1.2rem;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.gallery-item:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(107,13,13,0.3);
+}
+.gallery-item img, .gallery-item video {
+    width: 100%; display: block;
+    border-radius: 16px;
+}
+.gallery-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(61,8,8,0.85) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.35s ease;
+    display: flex; align-items: flex-end; padding: 1rem;
+    border-radius: 16px;
+}
+.gallery-item:hover .gallery-overlay { opacity: 1; }
+.gallery-overlay-text {
+    color: #fff; font-size: 0.88rem; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+}
+.gallery-overlay-text i { color: #ffd700; }
+
+/* Lightbox */
+#lightbox {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.92); z-index:9999;
+    justify-content:center; align-items:center;
+    backdrop-filter:blur(8px);
+}
+#lightbox.active { display:flex; }
+#lightbox img, #lightbox video {
+    max-width:90vw; max-height:88vh;
+    border-radius:16px;
+    box-shadow:0 16px 64px rgba(0,0,0,0.6);
+    border:2px solid rgba(200,148,42,0.3);
+}
+#lightboxClose {
+    position:fixed; top:24px; right:28px;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; width:44px; height:44px; border-radius:50%;
+    font-size:1.3rem; cursor:pointer; display:flex;
+    align-items:center; justify-content:center;
+    transition:all 0.2s; z-index:10000;
+}
+#lightboxClose:hover { background:rgba(200,148,42,0.4); }
+#lightboxCaption {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    color:rgba(255,240,180,0.9); font-size:1rem; letter-spacing:1px;
+    background:rgba(0,0,0,0.5); padding:6px 20px; border-radius:30px;
+    backdrop-filter:blur(8px); border:1px solid rgba(200,148,42,0.3);
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Hero -->
+<div class="page-hero">
+    <div class="container">
+        <span class="hero-icon"><i class="fas fa-images"></i></span>
+        <h1>Divine Gallery</h1>
+        <p class="hero-subtitle">Glimpses of grace, rituals &amp; sacred moments</p>
+    </div>
+</div>
+
 <div class="container py-5">
-    <h2 class="text-center mb-4"><i class="fas fa-images"></i> Temple Gallery</h2>
-    <div class="row g-4">
-        {% for image in images %}
-        <div class="col-md-4 col-lg-3">
-            <div class="card gallery-card h-100 shadow-sm">
-                <img src="{{ url_for('uploaded_file', filename=image.filename) }}" class="card-img-top gallery-img" style="height:200px; object-fit:cover; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#lightboxModal" data-src="{{ url_for('uploaded_file', filename=image.filename) }}" data-title="{{ image.title }}" data-desc="{{ image.description }}">
-                <div class="card-body">
-                    <h6 class="card-title">{{ image.title }}</h6>
-                    <p class="card-text small text-muted">{{ image.description[:50] }}...</p>
+
+    {% if images %}
+    <div class="gallery-grid" id="galleryGrid">
+        {% for img in images %}
+        <div class="gallery-item animate-on-scroll"
+             onclick="openLightbox('{% if img.media_type == 'image' %}{{ url_for('uploaded_file', filename=img.filename) }}{% else %}{{ url_for('uploaded_file', filename=img.filename) }}{% endif %}', '{{ img.caption or '' }}', '{{ img.media_type }}')">
+            {% if img.media_type == 'image' %}
+            <img src="{{ url_for('uploaded_file', filename=img.filename) }}"
+                 alt="{{ img.caption or 'Temple Gallery' }}" loading="lazy">
+            {% else %}
+            <video muted loop preload="metadata">
+                <source src="{{ url_for('uploaded_file', filename=img.filename) }}" type="video/mp4">
+            </video>
+            {% endif %}
+            <div class="gallery-overlay">
+                <div class="gallery-overlay-text">
+                    <i class="fas fa-{% if img.media_type == 'video' %}play-circle{% else %}expand{% endif %}"></i>
+                    {{ img.caption or 'View' }}
                 </div>
             </div>
         </div>
-        {% else %}
-        <div class="col-12 text-center">
-            <p>No images available yet. Check back soon!</p>
-        </div>
         {% endfor %}
     </div>
-</div>
-
-<!-- Lightbox Modal -->
-<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content bg-dark">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center p-0">
-                <img id="lightboxImage" src="" class="img-fluid" style="max-height:80vh;">
-                <h5 id="lightboxTitle" class="text-white mt-3"></h5>
-                <p id="lightboxDesc" class="text-white-50"></p>
-            </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div style="width:100px;height:100px;background:linear-gradient(135deg,#6B0D0D,#3d0808);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.5rem;">
+            <i class="fas fa-images" style="font-size:2.5rem;color:#ffd700;"></i>
         </div>
+        <h4 style="color:#6B0D0D;font-weight:700;">Gallery Coming Soon</h4>
+        <p class="text-muted">Divine moments will be shared here soon. Please check back later.</p>
     </div>
+    {% endif %}
 </div>
-{% endblock %}
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('lightboxModal');
-        const modalImg = document.getElementById('lightboxImage');
-        const modalTitle = document.getElementById('lightboxTitle');
-        const modalDesc = document.getElementById('lightboxDesc');
 
-        document.querySelectorAll('.gallery-img').forEach(img => {
-            img.addEventListener('click', function() {
-                modalImg.src = this.dataset.src;
-                modalTitle.textContent = this.dataset.title;
-                modalDesc.textContent = this.dataset.desc;
-            });
-        });
-    });
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+    <button id="lightboxClose" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+    <img id="lightboxImg" src="" alt="Gallery" style="display:none;">
+    <video id="lightboxVideo" controls style="display:none;"></video>
+    <div id="lightboxCaption"></div>
+</div>
+
+<script>
+function openLightbox(src, caption, type) {
+    const lb = document.getElementById('lightbox');
+    const img = document.getElementById('lightboxImg');
+    const vid = document.getElementById('lightboxVideo');
+    const cap = document.getElementById('lightboxCaption');
+    if (type === 'video') {
+        img.style.display = 'none';
+        vid.style.display = 'block';
+        vid.src = src;
+    } else {
+        vid.style.display = 'none'; vid.src = '';
+        img.style.display = 'block';
+        img.src = src;
+    }
+    cap.textContent = caption;
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    lb.classList.remove('active');
+    document.getElementById('lightboxVideo').pause();
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
+// Hover-play videos
+document.querySelectorAll('.gallery-item video').forEach(v => {
+    v.parentElement.addEventListener('mouseenter', ()=>v.play());
+    v.parentElement.addEventListener('mouseleave', ()=>{ v.pause(); v.currentTime=0; });
+});
 </script>
 {% endblock %}

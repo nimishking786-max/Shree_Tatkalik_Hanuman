@@ -1,57 +1,136 @@
 {% extends "base.html" %}
-{% block title %}Contact Us{% endblock %}
+{% block title %}Contact Us | Shree Tatkalik Hanuman{% endblock %}
+
+{% block extra_css %}
+<style>
+.contact-info-item {
+    display:flex; align-items:flex-start; gap:16px;
+    padding:1rem 0; border-bottom:1px solid rgba(200,148,42,0.12);
+}
+.contact-info-item:last-child { border-bottom:none; }
+.contact-icon {
+    width:46px; height:46px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg,#6B0D0D,#3d0808);
+    display:flex; align-items:center; justify-content:center;
+    color:#ffd700; font-size:1.1rem;
+    box-shadow:0 4px 16px rgba(107,13,13,0.35);
+}
+.contact-info-text h6 {
+    font-size:0.78rem; text-transform:uppercase; letter-spacing:2px;
+    color:#C8942A; font-weight:700; margin:0 0 4px;
+}
+.contact-info-text p { margin:0; color:#2d1a0a; font-weight:500; font-size:0.95rem; }
+textarea.form-control { resize:vertical; min-height:120px; }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Hero -->
+<div class="page-hero">
+    <div class="container">
+        <span class="hero-icon"><i class="fas fa-envelope-open-text"></i></span>
+        <h1>Contact Us</h1>
+        <p class="hero-subtitle">Reach out for blessings, bookings &amp; enquiries</p>
+    </div>
+</div>
+
 <div class="container py-5">
-    <h2 class="text-center mb-4"><i class="fas fa-envelope"></i> Contact Us</h2>
-    <div class="row g-4">
-        <div class="col-lg-6">
-            <div class="card shadow h-100">
-                <div class="card-body">
-                    <h4>Get in Touch</h4>
+    <div class="row g-4 align-items-start">
+
+        <!-- Contact Form -->
+        <div class="col-lg-7 animate-on-scroll">
+            <div class="card card-gold">
+                <div class="card-body p-4 p-md-5">
+                    <h3 class="mb-1" style="color:#6B0D0D;font-weight:700;">Send Us a Message</h3>
+                    <p class="mb-4 text-muted" style="font-size:0.9rem;">We usually respond within 24 hours.</p>
+
                     <form method="POST" id="contactForm">
                         <div class="mb-3">
-                            <label>Name *</label>
-                            <input type="text" name="name" class="form-control" required>
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" name="name" class="form-control" placeholder="Your full name" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Email *</label>
-                                <input type="email" name="email" class="form-control" required>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Phone</label>
-                                <input type="tel" name="phone" class="form-control">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" name="phone" class="form-control" placeholder="+91 00000 00000">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label>Subject *</label>
-                            <input type="text" name="subject" class="form-control" required>
+                            <label class="form-label">Subject *</label>
+                            <input type="text" name="subject" class="form-control" placeholder="How can we help?" required>
                         </div>
-                        <div class="mb-3">
-                            <label>Message *</label>
-                            <textarea name="message" class="form-control" rows="5" required></textarea>
+                        <div class="mb-4">
+                            <label class="form-label">Your Message *</label>
+                            <textarea name="message" class="form-control" placeholder="Write your message here…" required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Message</button>
+                        <button type="submit" class="btn btn-maroon px-5">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="card shadow h-100">
-                <div class="card-body">
-                    <h4>Our Location</h4>
-                    <div class="ratio ratio-16x9 mb-3">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.5156864409882!2d70.81343047533538!3d22.258447279716787!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3959b50013c3447b%3A0x4be3c92a2dad5cdc!2sJay%20Shree%20Tatkalik%20Hanuman%20Temple!5e0!3m2!1sen!2sin!4v1776070109753!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+        <!-- Info + Map -->
+        <div class="col-lg-5 animate-on-scroll animate-delay-2">
+            <div class="card card-gold mb-4">
+                <div class="card-body p-4">
+                    <h4 class="mb-3" style="color:#6B0D0D;font-weight:700;">
+                        <i class="fas fa-address-card me-2" style="color:#C8942A;"></i>Temple Details
+                    </h4>
+                    <div class="contact-info-item">
+                        <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="contact-info-text">
+                            <h6>Address</h6>
+                            <p>{{ settings.address_line1 }}{% if settings.address_line2 %}, {{ settings.address_line2 }}{% endif %},<br>
+                               {{ settings.city }}, {{ settings.state }} – {{ settings.pincode }}</p>
+                        </div>
                     </div>
-                    <h5><i class="fas fa-address-card"></i> Address</h5>
-                    <p>Rajwadi Chowk, Oppo. Hudko Police Station, Kothariya Main Road, Rajkot, Gujarat - 360002</p>
-                    <h5><i class="fas fa-phone"></i> Phone</h5>
-                    <p>+91 76210 13274</p>
-                    <h5><i class="fas fa-envelope"></i> Email</h5>
-                    <p>tatkalikhanumantemple@gmail.com</p>
+                    <div class="contact-info-item">
+                        <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+                        <div class="contact-info-text">
+                            <h6>Phone</h6>
+                            <p>{{ settings.phone_primary }}
+                            {% if settings.phone_secondary %}<br>{{ settings.phone_secondary }}{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="contact-info-item">
+                        <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="contact-info-text">
+                            <h6>Email</h6>
+                            <p>{{ settings.email_primary }}</p>
+                        </div>
+                    </div>
+                    <div class="contact-info-item">
+                        <div class="contact-icon"><i class="fas fa-clock"></i></div>
+                        <div class="contact-info-text">
+                            <h6>Temple Hours</h6>
+                            <p>Morning: {{ settings.morning_open }} – {{ settings.morning_close }}<br>
+                               Evening: {{ settings.evening_open }} – {{ settings.evening_close }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {% if settings.google_maps_embed %}
+            <div style="border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+                <iframe src="{{ settings.google_maps_embed }}"
+                        width="100%" height="250" style="border:0;display:block;"
+                        allowfullscreen="" loading="lazy"></iframe>
+            </div>
+            {% else %}
+            <div style="border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.5156864409882!2d70.81343047533538!3d22.258447279716787!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3959b50013c3447b%3A0x4be3c92a2dad5cdc!2sJay%20Shree%20Tatkalik%20Hanuman%20Temple!5e0!3m2!1sen!2sin!4v1776070109753!5m2!1sen!2sin"
+                        width="100%" height="250" style="border:0;display:block;"
+                        allowfullscreen="" loading="lazy"></iframe>
+            </div>
+            {% endif %}
         </div>
+
     </div>
 </div>
 {% endblock %}

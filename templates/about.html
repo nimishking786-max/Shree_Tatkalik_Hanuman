@@ -1,53 +1,143 @@
 {% extends "base.html" %}
 {% block title %}About | Shree Tatkalik Hanuman{% endblock %}
+
+{% block extra_css %}
+<style>
+.timing-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0.7rem 0; border-bottom:1px solid rgba(200,148,42,0.12);
+    font-size:0.92rem;
+}
+.timing-row:last-child { border-bottom:none; }
+.timing-label { color:#6B0D0D; font-weight:600; display:flex; align-items:center; gap:8px; }
+.timing-value { font-weight:700; color:#2d1a0a; }
+.stat-card {
+    text-align:center; padding:2rem 1rem;
+    border-radius:20px;
+    background:linear-gradient(135deg,#3d0808,#6B0D0D);
+    color:#fff; border:1px solid rgba(200,148,42,0.3);
+    box-shadow:0 8px 32px rgba(107,13,13,0.3);
+    transition:transform 0.3s ease;
+}
+.stat-card:hover { transform:translateY(-6px); }
+.stat-number {
+    font-size:3rem; font-weight:800;
+    background:linear-gradient(135deg,#ffd700,#e8b84b);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+    line-height:1;
+}
+.stat-label { color:rgba(255,240,180,0.8); font-size:0.88rem; letter-spacing:2px; text-transform:uppercase; margin-top:0.5rem; }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Hero -->
+<div class="page-hero">
+    <div class="container">
+        <span class="hero-icon"><i class="fas fa-om"></i></span>
+        <h1>About Our Temple</h1>
+        <p class="hero-subtitle">A sacred legacy of faith, devotion &amp; divine grace</p>
+    </div>
+</div>
+
 <div class="container py-5">
-    <div class="text-center mb-5">
-        <h1 class="display-5 fw-bold">About Shree Tatkalik Hanuman Temple</h1>
-        <p class="lead">A divine abode of Lord Hanuman, fulfilling wishes instantly.</p>
-    </div>
 
+    <!-- Stats Row -->
     <div class="row g-4 mb-5">
-        <div class="col-lg-6">
-            <div class="card border-0 shadow h-100">
-                <img src="{{ url_for('static', filename='images/about.jpeg') }}" class="card-img-top" style="height:300px; object-fit:cover;" alt="Temple">
-                <div class="card-body">
-                    <h3><i class="fas fa-history text-primary"></i> Our Legacy</h3>
-                    <p>Established over 300 years ago, Shree Tatkalik Hanuman Mandir is renowned for its powerful deity who grants immediate relief to devotees. The temple's serene atmosphere and ancient rituals attract thousands of visitors daily.</p>
+        {% for num, suffix, label in [('300','+ Yrs','Sacred Legacy'),('1000','+','Daily Devotees'),('4','','Daily Aartis'),('365','','Days Open')] %}
+        <div class="col-6 col-md-3 animate-on-scroll animate-delay-{{ loop.index }}">
+            <div class="stat-card">
+                <div class="stat-number" data-counter="{{ num }}" data-suffix="{{ suffix }}">{{ num }}{{ suffix }}</div>
+                <div class="stat-label">{{ label }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- About + Timings -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6 animate-on-scroll">
+            <div class="card card-gold h-100 p-0 overflow-hidden">
+                <img src="{{ url_for('static', filename='images/about.jpeg') }}"
+                     style="height:260px;object-fit:cover;" alt="Temple View">
+                <div class="card-body p-4">
+                    <div class="section-divider mb-3">
+                        <span><i class="fas fa-scroll"></i></span>
+                    </div>
+                    <h3 class="mb-3" style="color:#6B0D0D;font-weight:700;">
+                        <i class="fas fa-history me-2" style="color:#C8942A;"></i>Our Legacy
+                    </h3>
+                    <p style="color:#4a2a10;line-height:1.9;">
+                        Established over <strong>300 years ago</strong>, Shree Tatkalik Hanuman Mandir is
+                        renowned for its powerful deity who grants <em>immediate relief</em> to devotees.
+                        The temple's serene atmosphere and ancient rituals attract thousands of visitors daily.
+                    </p>
+                    <p style="color:#4a2a10;line-height:1.9;">
+                        "Tatkalik" means <strong>immediate</strong> in Sanskrit — Lord Hanuman here is
+                        believed to answer prayers instantly, making this a place of urgent hope and faith
+                        for countless devotees.
+                    </p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="card border-0 shadow h-100">
-                <div class="card-body">
-                    <h3><i class="fas fa-clock text-primary"></i> Temple Timings</h3>
-                    <ul class="list-group list-group-flush mb-4">
-                        <li class="list-group-item d-flex justify-content-between"><span>Morning Darshan</span> <strong>{{ settings.morning_open }} - {{ settings.morning_close }}</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Evening Darshan</span> <strong>{{ settings.evening_open }} - {{ settings.evening_close }}</strong></li>
-                    </ul>
-                    <h3><i class="fas fa-bell text-primary"></i> Aarti Schedule</h3>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between"><span>Mangala Aarti</span> <strong>{{ settings.mangala_aarti }}</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Bhog Aarti</span> <strong>{{ settings.bhog_aarti }}</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Sandhya Aarti</span> <strong>{{ settings.sandhya_aarti }}</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Shayan Aarti</span> <strong>{{ settings.shayan_aarti }}</strong></li>
-                    </ul>
+
+        <div class="col-lg-6 animate-on-scroll animate-delay-2">
+            <div class="card card-gold h-100">
+                <div class="card-body p-4">
+                    <h3 class="mb-4" style="color:#6B0D0D;font-weight:700;">
+                        <i class="fas fa-clock me-2" style="color:#C8942A;"></i>Darshan Timings
+                    </h3>
+                    <div class="timing-row">
+                        <span class="timing-label"><i class="fas fa-sun" style="color:#f39c12;"></i> Morning Darshan</span>
+                        <span class="timing-value">{{ settings.morning_open }} – {{ settings.morning_close }}</span>
+                    </div>
+                    <div class="timing-row">
+                        <span class="timing-label"><i class="fas fa-moon" style="color:#9b59b6;"></i> Evening Darshan</span>
+                        <span class="timing-value">{{ settings.evening_open }} – {{ settings.evening_close }}</span>
+                    </div>
+
+                    <h3 class="mt-4 mb-3" style="color:#6B0D0D;font-weight:700;">
+                        <i class="fas fa-bell me-2" style="color:#C8942A;"></i>Aarti Schedule
+                    </h3>
+                    <div class="timing-row">
+                        <span class="timing-label"><i class="fas fa-fire" style="color:#e74c3c;"></i> Mangala Aarti</span>
+                        <span class="timing-value">{{ settings.mangala_aarti }}</span>
+                    </div>
+                    <div class="timing-row">
+                        <span class="timing-label"><i class="fas fa-fire" style="color:#e67e22;"></i> Bhog Aarti</span>
+                        <span class="timing-value">{{ settings.bhog_aarti }}</span>
+                    </div>
+                    <div class="timing-row">
+                        <span class="timing-label"><i class="fas fa-fire" style="color:#e74c3c;"></i> Sandhya Aarti</span>
+                        <span class="timing-value">{{ settings.sandhya_aarti }}</span>
+                    </div>
+                    <div class="timing-row">
+                        <span class="timing-label"><i class="fas fa-star" style="color:#f1c40f;"></i> Shayan Aarti</span>
+                        <span class="timing-value">{{ settings.shayan_aarti }}</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Google Map Embed -->
-    <div class="card border-0 shadow">
-        <div class="card-body">
-            <h3><i class="fas fa-map-marked-alt text-primary"></i> Location</h3>
-            {% if settings.google_maps_embed %}
-            <div class="ratio ratio-21x9">
+    <!-- Location -->
+    {% if settings.google_maps_embed %}
+    <div class="card card-gold animate-on-scroll">
+        <div class="card-body p-4">
+            <h3 class="mb-4" style="color:#6B0D0D;font-weight:700;">
+                <i class="fas fa-map-marked-alt me-2" style="color:#C8942A;"></i>Temple Location
+            </h3>
+            <div class="ratio ratio-21x9 mb-3" style="border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.15);">
                 <iframe src="{{ settings.google_maps_embed }}" allowfullscreen="" loading="lazy"></iframe>
             </div>
-            {% endif %}
-            <p class="mt-2"><i class="fas fa-location-dot"></i> {{ settings.address_line1 }}, {{ settings.city }}, {{ settings.state }} - {{ settings.pincode }}</p>
+            <p class="mb-0" style="color:#6B0D0D;">
+                <i class="fas fa-location-dot me-2" style="color:#C8942A;"></i>
+                {{ settings.address_line1 }}, {{ settings.city }}, {{ settings.state }} – {{ settings.pincode }}
+            </p>
         </div>
     </div>
+    {% endif %}
+
 </div>
 {% endblock %}
