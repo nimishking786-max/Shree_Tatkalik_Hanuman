@@ -1011,6 +1011,37 @@ def send_test_email():
     except Exception as e:
         return f"ERROR: {str(e)}"
 
+@app.route('/reset-db')
+def reset_db():
+    import os
+    if os.environ.get('RENDER'):
+        db_path = '/opt/render/project/src/persistent/temple.db'
+        try:
+            os.remove(db_path)
+            flash_msg = "Old database deleted. "
+        except FileNotFoundError:
+            flash_msg = "No old database found. "
+    else:
+        db_path = 'temple.db'
+        try:
+            os.remove(db_path)
+            flash_msg = "Old database deleted. "
+        except FileNotFoundError:
+            flash_msg = "No old database found. "
+
+    # Recreate tables and admin user
+    db.create_all()
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', email='admin@temple.com', role='admin', full_name='Administrator')
+        admin.set_password('admin123')
+        admin.is_verified = True
+        db.session.add(admin)
+        db.session.commit()
+        flash_msg += "Database recreated. Admin: admin/admin123"
+    else:
+        flash_msg += "Admin already exists."
+    return flash_msg
 
 if __name__ == '__main__':
     create_admin()
