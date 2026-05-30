@@ -22,34 +22,18 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'bqzuvtcxcotnnvds'
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'tatkalikhanumantemple@gmail.com')
 app.config['ADMIN_EMAIL'] = os.environ.get('ADMIN_EMAIL', 'tatkalikhanumantemple@gmail.com')
 # ============================================
-# DATABASE CONFIGURATION
+# DATABASE CONFIGURATION (SQLite on Persistent Disk)
 # ============================================
 if os.environ.get('RENDER'):
-    database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
-        raise RuntimeError("DATABASE_URL environment variable is not set on Render!")
-    
-    # Force the use of psycopg (version 3) driver
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
-    elif database_url.startswith('postgresql://'):
-        database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
-    else:
-        # Fallback: if already has driver, ensure it's psycopg
-        if '+psycopg2' in database_url:
-            database_url = database_url.replace('+psycopg2', '+psycopg')
-        elif '?' in database_url:
-            database_url = database_url.replace('?', '+psycopg?')
-        else:
-            database_url = database_url + '+psycopg'
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(f"✅ Using database: {database_url.split('@')[1] if '@' in database_url else database_url}", flush=True)
+    # On Render, use SQLite on the persistent disk (never expires)
+    PERSISTENT_DIR = '/opt/render/project/src/persistent'
+    os.makedirs(PERSISTENT_DIR, exist_ok=True)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{PERSISTENT_DIR}/temple.db'
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temple.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
-
 # Upload folder configuration
 if os.environ.get('RENDER'):
     UPLOAD_DIR = '/opt/render/project/src/persistent/uploads'
